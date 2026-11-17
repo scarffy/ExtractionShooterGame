@@ -54,6 +54,23 @@ namespace ExtractionShooter.Gameplay.Session
             if (IsOwner) ServerBuy(offerIndex);
         }
 
+        /// <summary>Buys the next safe box size, if there is one.</summary>
+        public void RequestUpgradeSafeBox()
+        {
+            if (IsOwner) ServerUpgradeSafeBox();
+        }
+
+        /// <summary>The next safe box size and its price, or false when the box is already the biggest.</summary>
+        public bool TryGetNextSafeBox(out SafeBoxTier next)
+        {
+            next = default;
+            if (_trader == null || _session == null) return false;
+            int index = _session.SafeBoxTier + 1;
+            if (index >= _trader.SafeBoxTiers.Count) return false;
+            next = _trader.SafeBoxTiers[index];
+            return true;
+        }
+
         /// <summary>Sells from the stash or a bag opened in it. <paramref name="quantity"/> 0 sells the whole stack.</summary>
         public void RequestSell(ItemContainer source, int slot, int quantity = 0)
         {
@@ -109,6 +126,26 @@ namespace ExtractionShooter.Gameplay.Session
             _money.Value -= charged;
             _session.ServerAfterChange();
             Reply($"Bought {Describe(item, added)} for {FormatCredits(charged)}.", true);
+        }
+
+        [ServerRpc]
+        private void ServerUpgradeSafeBox()
+        {
+            if (_session.State != SessionState.Hideout || !TryGetNextSafeBox(out SafeBoxTier next)) return;
+            if (next.Price > _money.Value)
+            {
+                Reply($"Not enough credits for the {next.Name}.", false);
+                return;
+            }
+            if (!_session.ServerApplySafeBoxTier(_session.SafeBoxTier + 1))
+            {
+                Reply("The safe box could not be upgraded.", false);
+                return;
+            }
+
+            _money.Value -= next.Price;
+            _session.ServerAfterChange();
+            Reply($"Upgraded to the {next.Name} ({next.Width}x{next.Height}) for {FormatCredits(next.Price)}.", true);
         }
 
         [ServerRpc]

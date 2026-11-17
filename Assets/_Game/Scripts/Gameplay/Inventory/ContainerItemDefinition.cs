@@ -18,13 +18,18 @@ namespace ExtractionShooter.Gameplay.Inventory
     {
         [Header("Storage")]
         [SerializeField] private ContainerKind _containerKind = ContainerKind.Backpack;
-        [SerializeField, Min(1)] private int _capacity = 12;
+
+        [Tooltip("Storage grid: cells across and rows.")]
+        [SerializeField, Min(1)] private int _gridWidth = 4;
+        [SerializeField, Min(1)] private int _gridHeight = 3;
 
         [Tooltip("Networked prefab with an ItemContainer (slot rules: Storage, access: Carried).")]
         [SerializeField] private ItemContainer _storagePrefab;
 
         public ContainerKind ContainerKind => _containerKind;
-        public int Capacity => _capacity;
+        public int GridWidth => _gridWidth;
+        public int GridHeight => _gridHeight;
+        public int Capacity => _gridWidth * _gridHeight;
         public ItemContainer StoragePrefab => _storagePrefab;
 
         /// <summary>Each bag has its own contents, so bags never stack.</summary>

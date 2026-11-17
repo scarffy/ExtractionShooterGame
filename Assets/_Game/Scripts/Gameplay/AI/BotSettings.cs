@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using ExtractionShooter.Core.Inventory;
 using ExtractionShooter.Gameplay.Inventory;
 using ExtractionShooter.Gameplay.Weapons;
 using UnityEngine;
@@ -11,6 +13,9 @@ namespace ExtractionShooter.Gameplay.AI
         [Header("Weapon")]
         [SerializeField] private WeaponDefinition _weapon;
         [SerializeField] private AmmoDefinition _ammo;
+
+        [Tooltip("Attachments fitted to the weapon: they change how it shoots and come with it when the bot is looted.")]
+        [SerializeField] private List<AttachmentDefinition> _attachments = new List<AttachmentDefinition>();
 
         [Tooltip("Cone half-angle in degrees added to the weapon's own spread. Bots are not perfect shots.")]
         [SerializeField, Range(0f, 15f)] private float _aimError = 2.5f;
@@ -43,6 +48,19 @@ namespace ExtractionShooter.Gameplay.AI
         [SerializeField, Min(0f)] private float _insertionGraceSeconds = 10f;
 
         [SerializeField, Min(0.05f)] private float _thinkInterval = 0.2f;
+
+        [Tooltip("Gunfire closer than this is heard and investigated.")]
+        [SerializeField, Min(0f)] private float _gunshotHearingRange = 60f;
+
+        [Header("Tactics")]
+        [Tooltip("Seconds to stay in cover after getting badly hurt.")]
+        [SerializeField, Min(0f)] private float _coverSeconds = 3f;
+
+        [Tooltip("Seconds without seeing the target before flanking instead of walking straight at them.")]
+        [SerializeField, Min(0f)] private float _flankAfterSeconds = 3f;
+
+        [Tooltip("How far to the side of the target's last position a flank goes.")]
+        [SerializeField, Min(0f)] private float _flankOffset = 7f;
         [SerializeField, Min(0f)] private float _loseSightSeconds = 1.5f;
         [SerializeField, Min(0f)] private float _searchSeconds = 6f;
 
@@ -63,6 +81,23 @@ namespace ExtractionShooter.Gameplay.AI
         [SerializeField, Min(0)] private int _spareRoundsMax = 30;
 
         public WeaponDefinition Weapon => _weapon;
+
+        public IReadOnlyList<AttachmentDefinition> Attachments => _attachments;
+
+        /// <summary>The weapon's numbers with this bot's attachments.</summary>
+        public WeaponStats WeaponStats => WeaponStats.Of(_weapon, _attachments);
+
+        /// <summary>The attachments in item-stack form, for the weapon dropped on the corpse.</summary>
+        public string AttachmentsText
+        {
+            get
+            {
+                string text = null;
+                foreach (AttachmentDefinition mod in _attachments)
+                    if (mod != null && mod.Fits(_weapon)) text = WeaponMods.Set(text, mod.Slot, mod.Id);
+                return text;
+            }
+        }
         public AmmoDefinition Ammo => _ammo;
         public float AimError => _aimError;
         public float FirstShotErrorMultiplier => _firstShotErrorMultiplier;
@@ -79,6 +114,10 @@ namespace ExtractionShooter.Gameplay.AI
         public float ReactionSeconds => _reactionSeconds;
         public float InsertionGraceSeconds => _insertionGraceSeconds;
         public float ThinkInterval => _thinkInterval;
+        public float GunshotHearingRange => _gunshotHearingRange;
+        public float CoverSeconds => _coverSeconds;
+        public float FlankAfterSeconds => _flankAfterSeconds;
+        public float FlankOffset => _flankOffset;
         public float LoseSightSeconds => _loseSightSeconds;
         public float SearchSeconds => _searchSeconds;
         public float PatrolSpeed => _patrolSpeed;

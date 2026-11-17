@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f503239faa34e61a23ea1e149776bc3, type: 3}
+  m_Name: Mod_AngledGrip
+  m_EditorClassIdentifier:
+  _id: angled_grip
+  _displayName: Angled Grip
+  _description: Faster to the sights.
+  _icon: {fileID: 0}
+  _category: 7
+  _maxStack: 1
+  _value: 350
+  _slot: 2
+  _fitsPrimary: 1
+  _fitsPistol: 0
+  _spreadMultiplier: 1
+  _hipSpreadMultiplier: 0.9
+  _aimSecondsMultiplier: 0.8
+  _aimFieldOfView: 0
+  _scoped: 0
+  _magazineBonus: 0
+  _soundRangeMultiplier: 1
+  _recoilMultiplier: 0.95
+  _width: 1
+  _height: 1

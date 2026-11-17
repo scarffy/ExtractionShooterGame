@@ -22,8 +22,11 @@ namespace ExtractionShooter.Gameplay.Inventory
     {
         private const byte NoWeapon = byte.MaxValue;
 
-        [Tooltip("Container with 7 slots, slot rules: Equipment, access: Carried.")]
+        [Tooltip("Container with 8 slots, slot rules: Equipment, access: Carried.")]
         [SerializeField] private ItemContainer _equipment;
+
+        [Tooltip("Child container: 5x1 grid, slot rules: Pockets, access: Carried. Always there, rig or not.")]
+        [SerializeField] private ItemContainer _pockets;
 
         private readonly SyncVar<byte> _activeWeaponSlot = new SyncVar<byte>(NoWeapon);
 
@@ -35,6 +38,9 @@ namespace ExtractionShooter.Gameplay.Inventory
         public event Action Changed;
 
         public ItemContainer Container => _equipment;
+
+        /// <summary>The pockets: five small items, carried with or without a chest rig. Lost on death.</summary>
+        public ItemContainer Pockets => _pockets;
 
         public ItemStack GetItem(EquipmentSlot slot) =>
             _equipment != null ? _equipment.GetSlot((int)slot) : ItemStack.Empty;
@@ -71,6 +77,15 @@ namespace ExtractionShooter.Gameplay.Inventory
             return true;
         }
 
+        /// <summary>The drawn weapon's effective numbers with its attachments. False when none is drawn.</summary>
+        public bool TryGetActiveWeaponStats(out WeaponStats stats)
+        {
+            stats = default;
+            if (!TryGetActiveWeapon(out EquipmentSlot _, out WeaponDefinition weapon, out ItemStack item)) return false;
+            stats = WeaponStats.Of(weapon, item, _equipment.ItemDatabase);
+            return true;
+        }
+
         /// <summary>Looks up an ammo type by id.</summary>
         public bool TryGetAmmo(string ammoId, out AmmoDefinition ammo)
         {
@@ -88,6 +103,19 @@ namespace ExtractionShooter.Gameplay.Inventory
         /// <summary>Storage of the equipped backpack, or null.</summary>
         public ItemContainer BackpackStorage => ResolveStorage(EquipmentSlot.Backpack);
 
+        /// <summary>Everything carried that holds loose items, in use order: rig, pockets, backpack (missing ones skipped).</summary>
+        public IEnumerable<ItemContainer> CarriedStorage
+        {
+            get
+            {
+                ItemContainer rig = ChestRigStorage;
+                if (rig != null) yield return rig;
+                if (_pockets != null) yield return _pockets;
+                ItemContainer backpack = BackpackStorage;
+                if (backpack != null) yield return backpack;
+            }
+        }
+
         private void Awake()
         {
             _character = GetComponent<PlayerCharacter>();
@@ -95,6 +123,8 @@ namespace ExtractionShooter.Gameplay.Inventory
 
             if (_equipment == null)
                 Debug.LogError($"[{nameof(PlayerEquipment)}] Equipment container is not assigned on {name}.", this);
+            if (_pockets == null)
+                Debug.LogError($"[{nameof(PlayerEquipment)}] Pockets container is not assigned on {name}.", this);
         }
 
         private void OnDestroy()
@@ -260,15 +290,16 @@ namespace ExtractionShooter.Gameplay.Inventory
             string loaded = TryGetAmmo(item.AmmoId, out AmmoDefinition loadedAmmo) && weapon.Accepts(loadedAmmo) ? item.AmmoId : null;
 
             ServerCollectAmmo(weapon.Caliber, _ammoBuffer);
-            plan = ReloadPlanner.Create(loaded, loaded != null ? item.AmmoCount : 0, weapon.MagazineSize, _ammoBuffer);
+            int magazine = WeaponStats.Of(weapon, item, _equipment.ItemDatabase).MagazineSize;
+            plan = ReloadPlanner.Create(loaded, loaded != null ? item.AmmoCount : 0, magazine, _ammoBuffer);
             return true;
         }
 
-        /// <summary>Server: every stack of ammo of a caliber in the rig, then the backpack, in slot order.</summary>
+        /// <summary>Server: every stack of ammo of a caliber in the rig, pockets, then the backpack, in slot order.</summary>
         private void ServerCollectAmmo(Caliber caliber, List<KeyValuePair<string, int>> results)
         {
             results.Clear();
-            foreach (ItemContainer storage in new[] { ChestRigStorage, BackpackStorage })
+            foreach (ItemContainer storage in CarriedStorage)
             {
                 SlotInventory inventory = storage != null ? storage.ServerInventory : null;
                 if (inventory == null) continue;
@@ -282,11 +313,11 @@ namespace ExtractionShooter.Gameplay.Inventory
             }
         }
 
-        /// <summary>Server: removes up to <paramref name="quantity"/> of an item from the rig, then the backpack.</summary>
+        /// <summary>Server: removes up to <paramref name="quantity"/> of an item from the rig, pockets, then the backpack.</summary>
         private int ServerRemoveFromStorage(string itemId, int quantity)
         {
             int removed = 0;
-            foreach (ItemContainer storage in new[] { ChestRigStorage, BackpackStorage })
+            foreach (ItemContainer storage in CarriedStorage)
             {
                 SlotInventory inventory = storage != null ? storage.ServerInventory : null;
                 if (inventory == null || removed >= quantity) continue;

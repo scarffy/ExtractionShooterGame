@@ -20,6 +20,12 @@ namespace ExtractionShooter.Gameplay.Raid
 
         public string DisplayName => _displayName;
 
+        /// <summary>Box size in local space (the map draws it).</summary>
+        public Vector3 Size => _size;
+
+        /// <summary>Every enabled zone in the loaded scenes (on server and clients alike; zones are scene objects).</summary>
+        public static IReadOnlyList<ExtractionZone> All => ActiveZones;
+
         /// <summary>The zone containing a world position, or null.</summary>
         public static ExtractionZone Find(Vector3 worldPosition)
         {

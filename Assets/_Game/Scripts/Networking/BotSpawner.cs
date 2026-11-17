@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using ExtractionShooter.Gameplay.AI;
+using ExtractionShooter.Core.Matchmaking;
 using ExtractionShooter.Gameplay.Player;
+using ExtractionShooter.Gameplay.Session;
 using FishNet.Managing;
 using FishNet.Transporting;
 using Unity.AI.Navigation;
@@ -11,6 +13,7 @@ namespace ExtractionShooter.Networking
     /// <summary>
     /// Server only: builds the NavMesh when the server starts, then keeps up to <see cref="_maxBots"/> bots
     /// alive. A dead bot is replaced after <see cref="_respawnSeconds"/>, at a spawn point no player is near.
+    /// Every raid instance after the first starts with a fresh set of bots.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BotSpawner : MonoBehaviour
@@ -29,6 +32,9 @@ namespace ExtractionShooter.Networking
 
         [Tooltip("A bot never appears closer than this to a living player.")]
         [SerializeField, Min(0f)] private float _minPlayerDistance = 20f;
+
+        [Tooltip("Optional: replaces every bot when a new raid instance launches.")]
+        [SerializeField] private SquadLobby _lobby;
 
         private readonly List<BotBrain> _bots = new List<BotBrain>();
         private bool _running;
@@ -54,12 +60,26 @@ namespace ExtractionShooter.Networking
         {
             if (_networkManager != null)
                 _networkManager.ServerManager.OnServerConnectionState += HandleServerConnectionState;
+            if (_lobby != null) _lobby.ServerRaidOpened += HandleRaidOpened;
         }
 
         private void OnDestroy()
         {
             if (_networkManager != null && _networkManager.ServerManager != null)
                 _networkManager.ServerManager.OnServerConnectionState -= HandleServerConnectionState;
+            if (_lobby != null) _lobby.ServerRaidOpened -= HandleRaidOpened;
+        }
+
+        /// <summary>A new raid instance: despawn the previous instance's bots and spawn a full set (the first raid uses the start-up set).</summary>
+        private void HandleRaidOpened(RaidInstance raid)
+        {
+            if (!_running || raid == null || raid.Id <= 1) return;
+
+            foreach (BotBrain bot in _bots)
+                if (bot != null && bot.IsSpawned) _networkManager.ServerManager.Despawn(bot.NetworkObject);
+            _bots.Clear();
+            for (int i = 0; i < _maxBots; i++) TrySpawnBot();
+            _nextSpawnAt = Time.time + _respawnSeconds;
         }
 
         private void HandleServerConnectionState(ServerConnectionStateArgs args)

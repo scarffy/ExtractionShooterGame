@@ -200,6 +200,155 @@
     width: 944px;
 }
 
+/* Squad tab: same place and width as the trader column. */
+.inventory-column--squad {
+    width: 944px;
+}
+
+/* ---------- Squad & matchmaking ---------- */
+
+.queue-status {
+    max-width: 320px;
+    margin-right: 16px;
+    color: rgb(150, 200, 120);
+    font-size: 15px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-right;
+    white-space: normal;
+}
+
+.hideout-tab--alert {
+    border-width: 2px;
+    border-color: rgb(150, 200, 120);
+}
+
+.deploy-button--cancel {
+    background-color: rgb(120, 60, 50);
+}
+
+.deploy-button--cancel:hover {
+    background-color: rgb(140, 72, 60);
+}
+
+.squad-code {
+    margin-bottom: 8px;
+    color: rgb(230, 190, 90);
+    font-size: 20px;
+    -unity-font-style: bold;
+}
+
+.squad-empty {
+    white-space: normal;
+}
+
+.squad-members {
+    margin-bottom: 4px;
+}
+
+.squad-member {
+    flex-direction: row;
+    align-items: center;
+    height: 40px;
+    margin-bottom: 6px;
+    padding: 0 12px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(30, 35, 40);
+}
+
+.squad-member--self {
+    border-color: rgba(230, 190, 90, 0.45);
+}
+
+.squad-member__name {
+    flex-grow: 1;
+    color: rgb(235, 235, 225);
+    font-size: 17px;
+    -unity-font-style: bold;
+}
+
+.squad-member__tag {
+    margin-left: 12px;
+    color: rgba(230, 225, 210, 0.55);
+    font-size: 14px;
+}
+
+.squad-member__tag--leader {
+    color: rgb(230, 190, 90);
+}
+
+.squad-member__tag--ready {
+    color: rgb(150, 200, 120);
+    -unity-font-style: bold;
+}
+
+.squad-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.squad-button {
+    min-width: 120px;
+    margin: 10px 10px 0 0;
+    padding: 0 16px;
+}
+
+.squad-button--neutral {
+    background-color: rgb(70, 70, 76);
+}
+
+.squad-button--neutral:hover {
+    background-color: rgb(86, 86, 94);
+}
+
+.squad-button--active {
+    background-color: rgb(150, 200, 120);
+    color: rgb(22, 26, 30);
+}
+
+.squad-field {
+    width: 260px;
+    height: 34px;
+    margin: 10px 10px 0 0;
+    font-size: 15px;
+}
+
+.squad-invite {
+    flex-direction: row;
+    align-items: center;
+    border-color: rgba(150, 200, 120, 0.6);
+}
+
+.squad-invite__label {
+    flex-grow: 1;
+    color: rgb(235, 235, 225);
+    font-size: 17px;
+    -unity-font-style: bold;
+}
+
+.squad-queue {
+    min-height: 24px;
+    color: rgb(150, 200, 120);
+    font-size: 18px;
+    -unity-font-style: bold;
+}
+
+.squad-message {
+    min-height: 20px;
+    margin-top: 6px;
+    color: rgb(230, 225, 210);
+    font-size: 14px;
+    white-space: normal;
+}
+
+.squad-note {
+    margin-top: 8px;
+    color: rgba(230, 225, 210, 0.5);
+    font-size: 13px;
+    white-space: normal;
+}
+
 .trader-filters {
     flex-direction: row;
     margin-bottom: 8px;
@@ -384,6 +533,52 @@
     -unity-font-style: bold;
 }
 
+/* ---------- Grid inventories ----------
+   Geometry comes from GridMetrics (UI/Inventory/GridMetrics.cs): 64px pitch, 4px gap, so cells are 60px.
+   Cells, item tiles and the drop preview are positioned inline; these rules only style them. */
+
+.slot-grid--cells {
+    position: relative;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    margin: 2px 0 2px 0;
+}
+
+.grid-cell {
+    position: absolute;
+    border-radius: 3px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(30, 34, 38, 0.8);
+}
+
+.slot.grid-item {
+    position: absolute;
+    margin: 0;
+    padding: 4px 5px;
+}
+
+.slot.grid-item .slot__name {
+    max-height: none;
+}
+
+.grid-placement {
+    position: absolute;
+    border-radius: 4px;
+    border-width: 2px;
+}
+
+.grid-placement--valid {
+    border-color: rgb(120, 200, 110);
+    background-color: rgba(120, 200, 110, 0.18);
+}
+
+.grid-placement--invalid {
+    border-color: rgb(230, 100, 80);
+    background-color: rgba(230, 100, 80, 0.18);
+}
+
 /* Category colour stripe */
 .slot--ammo     { border-left-color: rgb(196, 160, 72); }
 .slot--medical  { border-left-color: rgb(196, 72, 72); }
@@ -429,4 +624,232 @@
     margin-top: 4px;
     color: rgba(225, 220, 205, 0.55);
     font-size: 14px;
+}
+
+/* ---------- Character preview, gear value, safe box ---------- */
+
+.preview-panel {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 12px;
+}
+
+.character-preview {
+    width: 120px;
+    height: 150px;
+    border-radius: 4px;
+    background-color: rgba(10, 12, 14, 0.9);
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.gear-value {
+    flex-grow: 1;
+    margin-left: 16px;
+    color: rgb(230, 190, 90);
+    font-size: 16px;
+    white-space: normal;
+}
+
+.inventory-panel--safe {
+    border-color: rgba(230, 190, 90, 0.45);
+}
+
+/* Stash scrolls inside a fixed height, leaving room under it for an opened bag. */
+.stash-scroll {
+    height: 780px;
+}
+
+.stash-scroll--compact {
+    height: 420px;
+}
+
+/* ======================================================================================
+   Delta Force-style loadout layout (hideout stash and raid inventory):
+   character | equipment slots | chest rig · pockets · backpack · safe box | stash or loot
+   ====================================================================================== */
+
+.hideout-header {
+    width: 1870px;
+}
+
+.inventory-column {
+    margin: 0 10px;
+}
+
+/* Character render with name and gear value at the bottom. */
+.character-column {
+    width: 310px;
+    height: 800px;
+    justify-content: space-between;
+}
+
+.character-column .character-preview {
+    width: 310px;
+    height: 720px;
+    border-radius: 6px;
+    background-color: rgba(22, 26, 30, 0.6);
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.character-footer {
+    padding: 6px 4px 0 4px;
+}
+
+.character-name {
+    color: rgb(225, 220, 205);
+    font-size: 30px;
+    -unity-font-style: bold;
+}
+
+.character-footer .gear-value {
+    margin-left: 0;
+    color: rgb(230, 190, 90);
+    font-size: 16px;
+}
+
+/* Equipment: helmet, armor, pistol, melee stacked; primaries wide underneath. */
+.equipment-column {
+    width: 260px;
+}
+
+.equipment-grid {
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.equip-host {
+    margin-bottom: 8px;
+}
+
+.equip-host--square {
+    width: 130px;
+    height: 112px;
+}
+
+.equip-host--wide {
+    width: 260px;
+    height: 112px;
+}
+
+.equip-host--item {
+    width: 120px;
+    height: 120px;
+    margin: 0 10px 0 0;
+}
+
+.equip-host > .slot {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+/* Middle: storage sections, scrolling when tall. */
+.storage-column {
+    width: 540px;
+    height: 800px;
+}
+
+.storage-section {
+    margin-bottom: 10px;
+    padding: 0 10px 10px 10px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(22, 26, 30, 0.95);
+}
+
+.storage-section--safe {
+    border-color: rgba(230, 190, 90, 0.45);
+}
+
+.storage-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.storage-title {
+    margin: 0 -10px 10px -10px;
+    padding: 6px 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: rgb(230, 225, 210);
+    font-size: 17px;
+    -unity-font-style: bold;
+}
+
+.storage-header .storage-title {
+    flex-grow: 1;
+}
+
+.storage-header .panel-button {
+    margin: 0 0 10px 8px;
+}
+
+.storage-row {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.storage-body {
+    flex-grow: 1;
+}
+
+.safebox-icon {
+    width: 120px;
+    height: 120px;
+    margin-right: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: rgba(40, 46, 52, 0.95);
+    justify-content: space-between;
+}
+
+.safebox-icon__name {
+    color: rgb(230, 190, 90);
+    font-size: 14px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.safebox-icon__note {
+    color: rgba(230, 225, 210, 0.55);
+    font-size: 12px;
+}
+
+/* Right: stash (hideout) or loot (raid). 10 cells across plus scrollbar. */
+.inventory-column--stash,
+.loot-column {
+    width: 680px;
+}
+
+.stash-scroll {
+    height: 720px;
+}
+
+.stash-scroll--compact {
+    height: 380px;
+}
+
+/* Trader and squad take the place of the character, equipment and storage columns. */
+.inventory-column--trader,
+.inventory-column--squad {
+    width: 1150px;
+}
+
+.storage-header {
+    margin: 0 -10px 10px -10px;
+    padding: 4px 10px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.storage-header .storage-title {
+    margin: 0;
+    padding: 2px 0;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.storage-header .panel-button {
+    height: 26px;
+    margin: 0 0 0 8px;
+    font-size: 13px;
 }

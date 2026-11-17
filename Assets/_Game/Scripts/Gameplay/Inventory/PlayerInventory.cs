@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using ExtractionShooter.Core.Combat;
 using ExtractionShooter.Core.Inventory;
+using ExtractionShooter.Gameplay.Combat;
 using ExtractionShooter.Gameplay.Player;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
@@ -11,8 +13,11 @@ namespace ExtractionShooter.Gameplay.Inventory
     /// <summary>
     /// The only path for a client to change items. Tracks the world container being looted (and a bag
     /// opened inside it), and validates every request on the server.
-    /// A player may touch: their equipment, their equipped rig and backpack storage, the open world
-    /// container while within reach, and the storage of a bag lying in that container.
+    /// A player may touch: their equipment, their pockets, their equipped rig and backpack storage, their safe box
+    /// (it lives on their session, so it is kept on death and never lootable), the open world container while
+    /// within reach, and the storage of a bag lying in that container.
+    /// Containers are sent in RPCs as <see cref="ItemContainer"/> references (object + component), so child
+    /// containers such as the pockets and the safe box are addressed exactly.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCharacter), typeof(PlayerEquipment))]
@@ -28,6 +33,7 @@ namespace ExtractionShooter.Gameplay.Inventory
 
         private PlayerCharacter _character;
         private PlayerEquipment _equipment;
+        private ItemContainer _serverSafeBox;
 
         /// <summary>Owner side. Raised when the looted container or the opened bag changes.</summary>
         public event Action OpenContainersChanged;
@@ -92,11 +98,13 @@ namespace ExtractionShooter.Gameplay.Inventory
         /// <summary>
         /// Moves items between any two accessible containers.
         /// <paramref name="targetSlot"/> -1 places automatically; <paramref name="quantity"/> 0 moves the whole stack.
+        /// In a grid, <paramref name="targetSlot"/> is the item's new top-left cell and <paramref name="rotated"/> its orientation there.
         /// </summary>
-        public void RequestTransfer(ItemContainer source, int sourceSlot, ItemContainer target, int targetSlot = -1, int quantity = 0)
+        public void RequestTransfer(ItemContainer source, int sourceSlot, ItemContainer target, int targetSlot = -1, int quantity = 0,
+            bool rotated = false)
         {
             if (IsOwner && source != null && target != null)
-                ServerTransfer(source.NetworkObject, sourceSlot, target.NetworkObject, targetSlot, quantity);
+                ServerTransfer(source, sourceSlot, target, targetSlot, quantity, rotated);
         }
 
         /// <summary>
@@ -105,13 +113,13 @@ namespace ExtractionShooter.Gameplay.Inventory
         /// </summary>
         public void RequestQuickMove(ItemContainer source, int sourceSlot, int quantity = 0)
         {
-            if (IsOwner && source != null) ServerQuickMove(source.NetworkObject, sourceSlot, quantity);
+            if (IsOwner && source != null) ServerQuickMove(source, sourceSlot, quantity);
         }
 
         /// <summary>Uses a consumable (medical item) from the player's own equipment or bags.</summary>
         public void RequestUse(ItemContainer source, int sourceSlot)
         {
-            if (IsOwner && source != null) ServerUse(source.NetworkObject, sourceSlot);
+            if (IsOwner && source != null) ServerUse(source, sourceSlot);
         }
 
         // ---------------- Server RPCs ----------------
@@ -149,7 +157,7 @@ namespace ExtractionShooter.Gameplay.Inventory
         }
 
         [ServerRpc]
-        private void ServerTransfer(NetworkObject source, int sourceSlot, NetworkObject target, int targetSlot, int quantity)
+        private void ServerTransfer(ItemContainer source, int sourceSlot, ItemContainer target, int targetSlot, int quantity, bool rotated)
         {
             if (!_character.Health.IsAlive) return;
 
@@ -157,11 +165,34 @@ namespace ExtractionShooter.Gameplay.Inventory
             SlotInventory to = ResolveAccessible(target, out _);
             if (from == null || to == null) return;
 
-            from.TransferTo(to, sourceSlot, targetSlot, quantity);
+            // An attachment dropped on a weapon is fitted to it rather than moved.
+            if (targetSlot >= 0 && WeaponModding.TryFit(from, sourceSlot, to, targetSlot, _equipment.Container.ItemDatabase) !=
+                ModResult.NotApplicable) return;
+
+            from.TransferTo(to, sourceSlot, targetSlot, quantity, targetSlot >= 0 ? rotated : (bool?)null);
+        }
+
+        /// <summary>Takes an attachment off a weapon in the player's own equipment or bags.</summary>
+        public void RequestDetach(ItemContainer container, int slot, AttachmentSlot attachmentSlot)
+        {
+            if (IsOwner && container != null) ServerDetach(container, slot, attachmentSlot);
         }
 
         [ServerRpc]
-        private void ServerQuickMove(NetworkObject source, int sourceSlot, int quantity)
+        private void ServerDetach(ItemContainer container, int slot, AttachmentSlot attachmentSlot)
+        {
+            if (!_character.Health.IsAlive) return;
+            SlotInventory inventory = ResolveAccessible(container, out ContainerRole role);
+            if (inventory == null || role == ContainerRole.Loot) return;
+
+            var destinations = new List<SlotInventory> { inventory };
+            foreach (ItemContainer storage in _equipment.CarriedStorage)
+                if (storage != null && storage.ServerInventory != inventory) destinations.Add(storage.ServerInventory);
+            WeaponModding.TryDetach(inventory, slot, attachmentSlot, _equipment.Container.ItemDatabase, destinations.ToArray());
+        }
+
+        [ServerRpc]
+        private void ServerQuickMove(ItemContainer source, int sourceSlot, int quantity)
         {
             if (!_character.Health.IsAlive) return;
 
@@ -194,7 +225,7 @@ namespace ExtractionShooter.Gameplay.Inventory
         }
 
         [ServerRpc]
-        private void ServerUse(NetworkObject source, int sourceSlot)
+        private void ServerUse(ItemContainer source, int sourceSlot)
         {
             if (!_character.Health.IsAlive) return;
 
@@ -206,7 +237,9 @@ namespace ExtractionShooter.Gameplay.Inventory
             if (stack.IsEmpty || database == null || !database.TryGet(stack.ItemId, out ItemDefinition definition)) return;
             if (!(definition is MedicalDefinition medical)) return;
 
-            if (_character.Health.ServerHeal(medical.HealAmount) > 0)
+            // The treatment runs over time on PlayerInjuries; the item is used up when it starts.
+            PlayerInjuries injuries = _character.Injuries;
+            if (injuries != null ? injuries.ServerStartTreatment(medical) : _character.Health.ServerHeal(medical.HealAmount) > 0)
                 from.TakeFromSlot(sourceSlot, 1);
         }
 
@@ -214,15 +247,19 @@ namespace ExtractionShooter.Gameplay.Inventory
 
         private enum ContainerRole { None, Equipment, Storage, Loot }
 
+        /// <summary>Server, session: the owner's safe box, usable during this raid.</summary>
+        public void ServerSetSafeBox(ItemContainer safeBox) => _serverSafeBox = safeBox;
+
         /// <summary>The inventory if this player may use it right now, otherwise null.</summary>
-        private SlotInventory ResolveAccessible(NetworkObject networkObject, out ContainerRole role)
+        private SlotInventory ResolveAccessible(ItemContainer container, out ContainerRole role)
         {
             role = ContainerRole.None;
-            ItemContainer container = Resolve(networkObject);
-            if (container == null) return null;
+            if (container == null || !container.IsSpawned) return null;
 
             if (container == _equipment.Container) role = ContainerRole.Equipment;
-            else if (container == _equipment.ChestRigStorage || container == _equipment.BackpackStorage) role = ContainerRole.Storage;
+            else if (container == _equipment.ChestRigStorage || container == _equipment.BackpackStorage ||
+                     container == _equipment.Pockets || (_serverSafeBox != null && container == _serverSafeBox))
+                role = ContainerRole.Storage;
             else if (container == OpenContainer && container.ServerIsWithinReach(_character)) role = ContainerRole.Loot;
             else if (container == OpenNestedContainer && IsNestedStillReachable()) role = ContainerRole.Loot;
             else return null;
@@ -242,7 +279,7 @@ namespace ExtractionShooter.Gameplay.Inventory
 
         private bool TryMoveToStorage(SlotInventory from, int slot, int quantity)
         {
-            foreach (ItemContainer storage in new[] { _equipment.ChestRigStorage, _equipment.BackpackStorage })
+            foreach (ItemContainer storage in _equipment.CarriedStorage)
             {
                 if (storage != null && TryMove(from, slot, storage.ServerInventory, quantity)) return true;
             }

@@ -36,7 +36,7 @@ namespace ExtractionShooter.Gameplay.Inventory
 
                     ItemContainer storage = Object.Instantiate(bag.StoragePrefab);
                     storage.name = $"{bag.DisplayName} Storage";
-                    storage.ServerConfigure(bag.Capacity, bag.DisplayName);
+                    storage.ServerConfigure(bag.Capacity, bag.DisplayName, bag.GridWidth);
                     networkManager.ServerManager.Spawn(storage.NetworkObject);
                     return new ItemStack(bag.Id, 1, 0, ItemStack.ToContentsHandle(storage.ObjectId));
                 }

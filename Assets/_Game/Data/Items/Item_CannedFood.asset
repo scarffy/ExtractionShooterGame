@@ -19,3 +19,5 @@ MonoBehaviour:
   _category: 0
   _maxStack: 3
   _value: 10
+  _width: 1
+  _height: 1

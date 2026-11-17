@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ExtractionShooter.Core.Combat;
+using ExtractionShooter.Core.Throwables;
 using ExtractionShooter.Gameplay.Combat;
 using ExtractionShooter.Gameplay.Player;
 using ExtractionShooter.Gameplay.Weapons;
@@ -13,10 +14,15 @@ namespace ExtractionShooter.Gameplay.AI
 {
     /// <summary>
     /// Server-side bot: patrols the NavMesh, notices players it can see (field of view, range, line of sight)
-    /// or hear (close by, or shooting it), reacts after a delay, then shoots in bursts with its weapon's
-    /// magazine, fire rate and reload, using the same ballistics as players. When it loses sight it searches
-    /// the last known position, then goes back to patrolling. Movement replicates through the NetworkTransform;
-    /// clients only see tracers.
+    /// or hear (close by, gunfire within earshot, or shooting it), reacts after a delay, then shoots in bursts with its
+    /// weapon's magazine, fire rate and reload, using the same ballistics as players.
+    /// <list type="bullet">
+    /// <item>Takes cover (a nearby NavMesh point the threat cannot see) to reload, and when badly hurt.</item>
+    /// <item>Flanks: when the target has been out of sight for a while, approaches from the side instead of straight on.</item>
+    /// <item>Investigates gunfire it hears, then searches and goes back to patrolling.</item>
+    /// <item>Loadout variants: each bot picks one of several settings (pistol, SMG, rifle, shotgun) when it spawns.</item>
+    /// </list>
+    /// Movement replicates through the NetworkTransform; clients only see tracers and hear shots.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Health), typeof(NavMeshAgent))]
@@ -26,9 +32,14 @@ namespace ExtractionShooter.Gameplay.AI
         private const float FireAngle = 12f;
         private const float AwareMemorySeconds = 2f;
 
-        private enum State { Patrol, Engage, Search }
+        private const int CoverDirections = 12;
+
+        private enum State { Patrol, Engage, Search, Cover }
 
         [SerializeField] private BotSettings _settings;
+
+        [Tooltip("Loadout variants; one is picked at random per spawned bot. Empty uses the settings above.")]
+        [SerializeField] private BotSettings[] _variants;
 
         [Tooltip("Eye point for sight checks and shots.")]
         [SerializeField] private Transform _eye;
@@ -36,6 +47,7 @@ namespace ExtractionShooter.Gameplay.AI
         private static readonly List<BotBrain> ServerActiveList = new List<BotBrain>();
 
         private readonly RaycastHit[] _hitBuffer = new RaycastHit[HitBufferSize];
+        private readonly FishNet.Object.Synchronizing.SyncVar<byte> _variant = new FishNet.Object.Synchronizing.SyncVar<byte>();
 
         private NavMeshAgent _agent;
         private Health _health;
@@ -55,9 +67,16 @@ namespace ExtractionShooter.Gameplay.AI
         private float _reloadDoneAt;
         private int _burstLeft;
         private int _rounds;
+        private float _coverUntil;
+        private bool _tookCoverWhenHurt;
+        private float _blindUntil;
 
         /// <summary>Client side. Raised for every confirmed projectile (origin, end point).</summary>
         public event Action<Vector3, Vector3> ShotConfirmed;
+
+        public WeaponDefinition FiringWeapon => _settings != null ? _settings.Weapon : null;
+
+        public float FiringSoundMultiplier => _settings != null ? _settings.WeaponStats.SoundRangeMultiplier : 1f;
 
         /// <summary>Server: every spawned bot (alive or dead).</summary>
         public static IReadOnlyList<BotBrain> ServerActive => ServerActiveList;
@@ -69,6 +88,12 @@ namespace ExtractionShooter.Gameplay.AI
         /// <summary>Server: rounds left in the magazine (dropped with the weapon).</summary>
         public int RoundsLoaded => _rounds;
 
+        /// <summary>Server: blinded by a flash grenade; cannot shoot for <paramref name="seconds"/>.</summary>
+        public void ServerBlind(float seconds)
+        {
+            if (seconds > 0f) _blindUntil = Mathf.Max(_blindUntil, Time.time + seconds);
+        }
+
         private void Awake()
         {
             _agent = GetComponent<NavMeshAgent>();
@@ -79,6 +104,18 @@ namespace ExtractionShooter.Gameplay.AI
                 Debug.LogError($"[{nameof(BotBrain)}] Settings with a weapon and ammo must be assigned on {name}.", this);
             if (_eye == null)
                 Debug.LogError($"[{nameof(BotBrain)}] Eye is not assigned on {name}.", this);
+            _variant.OnChange += OnVariantChanged;
+        }
+
+        private void OnDestroy() => _variant.OnChange -= OnVariantChanged;
+
+        private void OnVariantChanged(byte previous, byte current, bool asServer) => ApplyVariant(current);
+
+        private void ApplyVariant(int index)
+        {
+            if (_variants == null || _variants.Length == 0) return;
+            BotSettings variant = _variants[index % _variants.Length];
+            if (variant != null && variant.Weapon != null && variant.Ammo != null) _settings = variant;
         }
 
         public override void OnStartServer()
@@ -86,6 +123,12 @@ namespace ExtractionShooter.Gameplay.AI
             base.OnStartServer();
             ServerActiveList.Add(this);
             _health.ServerDamaged += OnServerDamaged;
+            ShotNoise.ServerShotFired += OnServerShotHeard;
+            if (_variants != null && _variants.Length > 0)
+            {
+                _variant.Value = (byte)Random.Range(0, _variants.Length);
+                ApplyVariant(_variant.Value);
+            }
 
             if (NavMesh.SamplePosition(transform.position, out NavMeshHit hit, 4f, NavMesh.AllAreas))
                 transform.position = hit.position;
@@ -93,7 +136,7 @@ namespace ExtractionShooter.Gameplay.AI
             _home = transform.position;
             _agent.enabled = true;
             _agent.angularSpeed = _settings.TurnSpeed;
-            _rounds = _settings.Weapon.MagazineSize;
+            _rounds = _settings.WeaponStats.MagazineSize;
             _burstLeft = Random.Range(_settings.BurstMin, _settings.BurstMax + 1);
             EnterPatrol();
         }
@@ -103,6 +146,7 @@ namespace ExtractionShooter.Gameplay.AI
             base.OnStopServer();
             ServerActiveList.Remove(this);
             _health.ServerDamaged -= OnServerDamaged;
+            ShotNoise.ServerShotFired -= OnServerShotHeard;
             if (_agent != null) _agent.enabled = false;
         }
 
@@ -129,6 +173,7 @@ namespace ExtractionShooter.Gameplay.AI
                 case State.Patrol: UpdatePatrol(); break;
                 case State.Engage: UpdateEngage(now); break;
                 case State.Search: UpdateSearch(now); break;
+                case State.Cover: UpdateCover(now); break;
             }
         }
 
@@ -164,6 +209,15 @@ namespace ExtractionShooter.Gameplay.AI
 
             if (best != null)
             {
+                if (_state == State.Cover)
+                {
+                    // Still covering (reloading or healing up): remember where they are, keep hiding.
+                    _target = best;
+                    _lastSeenPosition = best.transform.position;
+                    _lastSeenTime = now;
+                    _targetVisible = true;
+                    return;
+                }
                 if (best != _target || !_targetVisible)
                 {
                     _canShootAt = now + _settings.ReactionSeconds;
@@ -187,6 +241,7 @@ namespace ExtractionShooter.Gameplay.AI
 
         private bool HasLineOfSight(PlayerCharacter target, Vector3 origin, Vector3 direction, float distance)
         {
+            if (SmokeVolumes.BlocksSight(origin, origin + direction * distance, Time.timeAsDouble)) return false;
             int count = Physics.RaycastNonAlloc(origin, direction, _hitBuffer, distance,
                 Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
             float closest = float.MaxValue;
@@ -204,6 +259,14 @@ namespace ExtractionShooter.Gameplay.AI
         private void OnServerDamaged(DamageInfo damage)
         {
             if (!_health.IsAlive || damage.InstigatorClientId == DamageInfo.NoInstigator) return;
+
+            // Badly hurt for the first time: break contact and take cover for a moment.
+            if (!_tookCoverWhenHurt && _health.Current <= _health.Max / 2)
+            {
+                _tookCoverWhenHurt = true;
+                Vector3 threat = damage.Point - damage.Direction * 10f;
+                if (TryEnterCover(threat, Time.time + _settings.CoverSeconds)) return;
+            }
 
             foreach (PlayerCharacter player in PlayerCharacter.ServerActive)
             {
@@ -238,6 +301,7 @@ namespace ExtractionShooter.Gameplay.AI
 
         private void EnterSearch(float now)
         {
+            _flankLeft = Random.value < 0.5f;
             _state = State.Search;
             _searchUntil = now + _settings.SearchSeconds;
             _agent.updateRotation = true;
@@ -264,11 +328,110 @@ namespace ExtractionShooter.Gameplay.AI
             if (!holdPosition)
             {
                 _agent.speed = _settings.ChaseSpeed;
-                _agent.SetDestination(_lastSeenPosition);
+                // Out of sight for a while: come round the side rather than walking into their sights.
+                bool flank = !_targetVisible && now - _lastSeenTime > _settings.FlankAfterSeconds;
+                _agent.SetDestination(flank ? FlankPoint(_lastSeenPosition) : _lastSeenPosition);
             }
 
             if (_targetVisible && _target != null) TryShoot(now);
         }
+
+        private void UpdateCover(float now)
+        {
+            if (_target != null) TurnTowards(_lastSeenPosition);
+            if (now < _coverUntil || now < _reloadDoneAt) return;
+
+            // Back into the fight: re-engage what we last saw, or search for it.
+            _agent.updateRotation = true;
+            if (_target != null && _targetVisible) { _state = State.Engage; return; }
+            EnterSearch(now);
+        }
+
+        /// <summary>
+        /// Moves to the nearest reachable point within a few metres that <paramref name="threat"/> cannot see.
+        /// False (and nothing changes) when there is no such point.
+        /// </summary>
+        private bool TryEnterCover(Vector3 threat, float until)
+        {
+            Vector3 threatEye = threat + Vector3.up * 1.5f;
+            Vector3 best = Vector3.zero;
+            float bestDistance = float.MaxValue;
+            for (int ring = 0; ring < 2; ring++)
+            {
+                float radius = ring == 0 ? 4f : 8f;
+                for (int i = 0; i < CoverDirections; i++)
+                {
+                    float angle = i * Mathf.PI * 2f / CoverDirections;
+                    Vector3 candidate = transform.position + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * radius;
+                    if (!NavMesh.SamplePosition(candidate, out NavMeshHit hit, 2f, NavMesh.AllAreas)) continue;
+                    if (!IsHiddenFrom(threatEye, hit.position + Vector3.up * 1.2f)) continue;
+
+                    float distance = (hit.position - transform.position).sqrMagnitude;
+                    if (distance < bestDistance)
+                    {
+                        bestDistance = distance;
+                        best = hit.position;
+                    }
+                }
+                if (bestDistance < float.MaxValue) break;
+            }
+            if (bestDistance == float.MaxValue) return false;
+
+            _state = State.Cover;
+            _coverUntil = until;
+            _agent.isStopped = false;
+            _agent.updateRotation = true;
+            _agent.speed = _settings.ChaseSpeed;
+            _agent.SetDestination(best);
+            return true;
+        }
+
+        /// <summary>Something solid (not a character) lies between the two points.</summary>
+        private bool IsHiddenFrom(Vector3 from, Vector3 to)
+        {
+            Vector3 direction = to - from;
+            float distance = direction.magnitude;
+            if (distance < 0.01f) return false;
+            int count = Physics.RaycastNonAlloc(from, direction / distance, _hitBuffer, distance,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+            {
+                Collider collider = _hitBuffer[i].collider;
+                if (collider.transform.IsChildOf(transform) || collider.GetComponentInParent<PlayerCharacter>() != null ||
+                    collider.GetComponentInParent<BotBrain>() != null) continue;
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Gunfire within earshot: an idle bot goes to look; an engaged bot updates where the fight is.</summary>
+        private void OnServerShotHeard(Vector3 origin, float audibleRange, int shooterClientId)
+        {
+            if (!_health.IsAlive || _settings == null || !_agent.isOnNavMesh) return;
+            float range = Mathf.Min(audibleRange, _settings.GunshotHearingRange);
+            if ((origin - transform.position).sqrMagnitude > range * range) return;
+            if ((origin - _eye.position).sqrMagnitude < 0.25f) return; // our own shot
+
+            if (_state == State.Patrol || _state == State.Search)
+            {
+                _lastSeenPosition = origin;
+                _lastSeenTime = Time.time;
+                EnterSearch(Time.time);
+            }
+        }
+
+        /// <summary>A point beside the target's last known position, to come at them from an angle.</summary>
+        private Vector3 FlankPoint(Vector3 target)
+        {
+            Vector3 toTarget = target - transform.position;
+            toTarget.y = 0f;
+            if (toTarget.sqrMagnitude < 1f) return target;
+            Vector3 side = Vector3.Cross(Vector3.up, toTarget.normalized) * (_flankLeft ? -1f : 1f);
+            Vector3 candidate = target + side * _settings.FlankOffset - toTarget.normalized * 2f;
+            return NavMesh.SamplePosition(candidate, out NavMeshHit hit, 3f, NavMesh.AllAreas) ? hit.position : target;
+        }
+
+        private bool _flankLeft;
 
         private void UpdateSearch(float now)
         {
@@ -306,12 +469,14 @@ namespace ExtractionShooter.Gameplay.AI
         private void TryShoot(float now)
         {
             WeaponDefinition weapon = _settings.Weapon;
-            if (now < _reloadDoneAt || now < _canShootAt || now < _nextShotAt) return;
+            if (now < _reloadDoneAt || now < _canShootAt || now < _nextShotAt || now < _blindUntil) return;
 
             if (_rounds <= 0)
             {
                 _reloadDoneAt = now + weapon.ReloadSeconds;
-                _rounds = weapon.MagazineSize;
+                _rounds = _settings.WeaponStats.MagazineSize;
+                // Reload behind something when possible.
+                if (_target != null) TryEnterCover(_target.transform.position, _reloadDoneAt);
                 return;
             }
 
@@ -327,7 +492,7 @@ namespace ExtractionShooter.Gameplay.AI
             float settle = Mathf.Clamp01((now - _engagedSince) / _settings.AimSettleSeconds);
             float aimError = _settings.AimError * Mathf.Lerp(_settings.FirstShotErrorMultiplier, 1f, settle);
             Vector3 aimed = ApplyAimError(direction, aimError, _settings.VerticalErrorScale);
-            float spread = weapon.Spread + ammo.ExtraSpread;
+            float spread = _settings.WeaponStats.Spread + ammo.ExtraSpread;
             var ends = new Vector3[ammo.Projectiles];
             for (int i = 0; i < ends.Length; i++)
                 ends[i] = FireProjectile(weapon, ammo, eye, HitscanQuery.ApplySpread(aimed, spread));
@@ -345,11 +510,12 @@ namespace ExtractionShooter.Gameplay.AI
             }
         }
 
+        /// <summary>One projectile along its drop curve, the same trace players use. Returns where it ended.</summary>
         private Vector3 FireProjectile(WeaponDefinition weapon, AmmoDefinition ammo, Vector3 origin, Vector3 direction)
         {
-            if (!HitscanQuery.TryGetFirstHit(origin, direction, weapon.Range, weapon.HitMask, transform, _hitBuffer,
-                    out RaycastHit hit, out Hitbox hitbox))
-                return origin + direction * weapon.Range;
+            if (!BallisticTrace.TryTrace(origin, direction, weapon.MuzzleVelocityWith(ammo), weapon.Range, weapon.HitMask, transform,
+                    _hitBuffer, out RaycastHit hit, out Hitbox hitbox, out Vector3 end, out Vector3 heading))
+                return end;
 
             IDamageable target = hit.collider.GetComponentInParent<IDamageable>();
             if (target != null)
@@ -357,7 +523,7 @@ namespace ExtractionShooter.Gameplay.AI
                 HitZone zone = hitbox != null ? hitbox.Zone : HitZone.Body;
                 float multiplier = hitbox != null ? hitbox.DamageMultiplier : 1f;
                 int damage = Mathf.Max(1, Mathf.RoundToInt(ammo.Damage * multiplier));
-                target.ApplyDamage(new DamageInfo(damage, DamageInfo.NoInstigator, hit.point, direction, zone,
+                target.ApplyDamage(new DamageInfo(damage, DamageInfo.NoInstigator, hit.point, heading, zone,
                     ammo.Penetration, ammo.ArmorDamagePercent));
             }
             return hit.point;

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4adc4f35b95043c59c751aaac303e964, type: 3}
+  m_Name: Grenade_Frag
+  m_EditorClassIdentifier:
+  _id: grenade_frag
+  _displayName: F1 Frag Grenade
+  _description: Fragmentation grenade. Lethal up close; cover stops the fragments.
+  _icon: {fileID: 0}
+  _category: 8
+  _maxStack: 1
+  _value: 180
+  _kind: 0
+  _fuseSeconds: 3.5
+  _throwSpeed: 14
+  _noiseRange: 120
+  _innerRadius: 2.5
+  _radius: 9
+  _damage: 140
+  _legShare: 0.35
+  _penetration: 25
+  _armorDamagePercent: 40
+  _flashMinSeconds: 0
+  _flashMaxSeconds: 0
+  _flashFullAngle: 45
+  _flashZeroAngle: 115
+  _smokeSeconds: 1
+  _smokeGrowSeconds: 2.5
+  _smokeFadeSeconds: 3
+  _width: 1
+  _height: 1

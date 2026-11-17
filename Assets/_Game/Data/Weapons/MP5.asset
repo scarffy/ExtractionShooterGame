@@ -32,3 +32,18 @@ MonoBehaviour:
     m_Bits: 4294967291
   _fireRateTolerance: 0.03
   _maxOriginError: 1.5
+  _hipSpreadMultiplier: 2.5
+  _moveSpread: 1.8
+  _aimSeconds: 0.2
+  _aimFieldOfView: 52
+  _scoped: 0
+  _muzzleVelocity: 400
+  _recoilVertical: 0.45
+  _recoilHorizontal: 0.22
+  _recoilHorizontalBias: 0.1
+  _recoilPatternSeed: 41
+  _recoilJitter: 0.06
+  _recoilRecovery: 9
+  _recoilResetSeconds: 0.2
+  _width: 3
+  _height: 2

@@ -128,3 +128,44 @@ MonoBehaviour:
     _quantity: 1
   - _item: {fileID: 11400000, guid: 40696ea490bb4105912779e5e8f6d494, type: 2}
     _quantity: 1
+  - _item: {fileID: 11400000, guid: 0812ecf9d05b4aa7819160c08a832be2, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 878ce71607794984aca98d4e15cacc37, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: c673265f053448a8811d6ebe8275ed13, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 41bb4f4d158a4606841f9d0ef9044874, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: f8a9b196a0314b42bec75aab41fbee1b, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 5075672df5f24c21a878b7ccd3918cf3, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 84be04295cb64564a52d79c3b3878cd3, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 4274fa67eacb42679ecb5c923f06fd2d, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 22e14ad2c3a94518965b9722e430a683, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 727c388f5c774646a9798e46e8d735f2, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 82854ffbd347459688740e4d0bed5b2d, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 81445fd023bf4b1183f66f0f5a4a2c36, type: 2}
+    _quantity: 1
+  _safeBoxTiers: 
+  - _name: Safe Box
+    _width: 2
+    _height: 1
+    _price: 0
+  - _name: Advanced Safe Box
+    _width: 2
+    _height: 2
+    _price: 15000
+  - _name: Premium Safe Box
+    _width: 2
+    _height: 3
+    _price: 40000
+  - _name: Ultimate Safe Box
+    _width: 3
+    _height: 3
+    _price: 90000

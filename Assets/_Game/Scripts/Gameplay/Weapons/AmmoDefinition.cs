@@ -28,11 +28,15 @@ namespace ExtractionShooter.Gameplay.Weapons
         [Tooltip("Extra spread in degrees added to the weapon's spread (shot pellets).")]
         [SerializeField, Range(0f, 15f)] private float _extraSpread;
 
+        [Tooltip("Multiplies the weapon's muzzle velocity (light fast rounds > 1, heavy or subsonic rounds < 1).")]
+        [SerializeField, Range(0.5f, 1.5f)] private float _muzzleVelocityMultiplier = 1f;
+
         public Caliber Caliber => _caliber;
         public int Damage => _damage;
         public float Penetration => _penetration;
         public float ArmorDamagePercent => _armorDamagePercent;
         public int Projectiles => _projectiles;
         public float ExtraSpread => _extraSpread;
+        public float MuzzleVelocityMultiplier => _muzzleVelocityMultiplier;
     }
 }

@@ -23,6 +23,10 @@ MonoBehaviour:
     _weight: 8
     _minQuantity: 1
     _maxQuantity: 1
+  - _item: {fileID: 11400000, guid: 0812ecf9d05b4aa7819160c08a832be2, type: 2}
+    _weight: 6
+    _minQuantity: 1
+    _maxQuantity: 1
   - _item: {fileID: 11400000, guid: 48093b0006ef4f48ad85ac6ad7608600, type: 2}
     _weight: 20
     _minQuantity: 1
@@ -39,3 +43,15 @@ MonoBehaviour:
     _weight: 6
     _minQuantity: 5
     _maxQuantity: 15
+  - _item: {fileID: 11400000, guid: 727c388f5c774646a9798e46e8d735f2, type: 2}
+    _weight: 4
+    _minQuantity: 1
+    _maxQuantity: 1
+  - _item: {fileID: 11400000, guid: 82854ffbd347459688740e4d0bed5b2d, type: 2}
+    _weight: 3
+    _minQuantity: 1
+    _maxQuantity: 1
+  - _item: {fileID: 11400000, guid: 81445fd023bf4b1183f66f0f5a4a2c36, type: 2}
+    _weight: 3
+    _minQuantity: 1
+    _maxQuantity: 1

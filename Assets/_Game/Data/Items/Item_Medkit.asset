@@ -14,9 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   _id: medkit
   _displayName: Medkit
-  _description: Field trauma kit. Restores a large amount of health.
+  _description: Field trauma kit. Stops bleeding and restores a lot of health over time.
   _icon: {fileID: 0}
   _category: 2
   _maxStack: 1
   _value: 80
   _healAmount: 60
+  _useSeconds: 6
+  _stopsBleeding: 1
+  _fixesFracture: 0
+  _width: 2
+  _height: 1

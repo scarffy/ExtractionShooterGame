@@ -18,6 +18,8 @@ namespace ExtractionShooter.Core.Persistence
             Durability = stack.Durability,
             AmmoId = stack.AmmoId,
             AmmoCount = stack.AmmoCount,
+            Rotated = stack.Rotated,
+            Attachments = stack.Attachments ?? string.Empty,
             ContentsKey = contentsKey ?? string.Empty,
         };
 
@@ -37,7 +39,9 @@ namespace ExtractionShooter.Core.Persistence
             string ammoId = !string.IsNullOrEmpty(stored.AmmoId) && catalog.Contains(stored.AmmoId) ? stored.AmmoId : null;
             int ammoCount = ammoId != null && stored.AmmoCount > 0 ? stored.AmmoCount : 0;
 
-            stack = new ItemStack(stored.ItemId, quantity, stored.Durability > 0 ? stored.Durability : 0, 0, ammoId, ammoCount);
+            string attachments = WeaponMods.Normalize(stored.Attachments, catalog.Contains);
+            stack = new ItemStack(stored.ItemId, quantity, stored.Durability > 0 ? stored.Durability : 0, 0, ammoId, ammoCount, stored.Rotated,
+                attachments);
             return true;
         }
 

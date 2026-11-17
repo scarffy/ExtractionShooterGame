@@ -72,6 +72,17 @@ namespace ExtractionShooter.Gameplay.Raid
             _secondsLeft.Value = Mathf.CeilToInt(_raidDurationSeconds);
         }
 
+        /// <summary>
+        /// Server, after spawning: ends this character's raid when its raid instance ends (same clock as
+        /// <see cref="Time.timeAsDouble"/>) instead of a full duration after it spawned, so late joiners get less time.
+        /// </summary>
+        public void ServerSetRaidEnd(double endsAt)
+        {
+            if (!IsServerInitialized || _finished) return;
+            _raidEndsAt = endsAt;
+            _secondsLeft.Value = Mathf.Max(0, (int)Math.Ceiling(endsAt - Time.timeAsDouble));
+        }
+
         private void Update()
         {
             if (!IsServerInitialized || _finished) return;

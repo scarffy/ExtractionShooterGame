@@ -3,7 +3,8 @@ using System;
 namespace ExtractionShooter.Core.Inventory
 {
     /// <summary>
-    /// An item (or a stack of identical plain items) occupying one inventory slot.
+    /// An item (or a stack of identical plain items) in one inventory slot. In a grid the slot is the
+    /// item's top-left cell and the item covers its footprint from there.
     /// Public fields so it can be replicated by the networking layer without a custom serializer.
     /// </summary>
     /// <remarks>
@@ -34,7 +35,14 @@ namespace ExtractionShooter.Core.Inventory
         /// <summary>Weapons: rounds currently loaded.</summary>
         public int AmmoCount;
 
-        public ItemStack(string itemId, int quantity, int durability = 0, int contentsHandle = 0, string ammoId = null, int ammoCount = 0)
+        /// <summary>Lies turned 90° in a grid (footprint width and height swapped). Ignored outside grids.</summary>
+        public bool Rotated;
+
+        /// <summary>Weapons: fitted attachments (<see cref="WeaponMods"/> format). Null when none.</summary>
+        public string Attachments;
+
+        public ItemStack(string itemId, int quantity, int durability = 0, int contentsHandle = 0, string ammoId = null, int ammoCount = 0,
+            bool rotated = false, string attachments = null)
         {
             ItemId = itemId;
             Quantity = quantity;
@@ -42,6 +50,8 @@ namespace ExtractionShooter.Core.Inventory
             ContentsHandle = contentsHandle;
             AmmoId = string.IsNullOrEmpty(ammoId) ? null : ammoId;
             AmmoCount = ammoCount;
+            Rotated = rotated;
+            Attachments = string.IsNullOrEmpty(attachments) ? null : attachments;
         }
 
         public static ItemStack Empty => default;
@@ -49,7 +59,8 @@ namespace ExtractionShooter.Core.Inventory
         public readonly bool IsEmpty => string.IsNullOrEmpty(ItemId) || Quantity <= 0;
 
         /// <summary>True if the item carries per-instance state and must never be merged or split.</summary>
-        public readonly bool IsStateful => Durability != 0 || ContentsHandle != 0 || AmmoCount != 0 || !string.IsNullOrEmpty(AmmoId);
+        public readonly bool IsStateful => Durability != 0 || ContentsHandle != 0 || AmmoCount != 0 || !string.IsNullOrEmpty(AmmoId) ||
+                                           !string.IsNullOrEmpty(Attachments);
 
         public readonly bool HasContents => ContentsHandle != 0;
 
@@ -64,18 +75,25 @@ namespace ExtractionShooter.Core.Inventory
             string.Equals(ItemId, other.ItemId, StringComparison.Ordinal);
 
         public readonly ItemStack WithQuantity(int quantity) =>
-            quantity > 0 ? new ItemStack(ItemId, quantity, Durability, ContentsHandle, AmmoId, AmmoCount) : Empty;
+            quantity > 0 ? new ItemStack(ItemId, quantity, Durability, ContentsHandle, AmmoId, AmmoCount, Rotated, Attachments) : Empty;
 
         public readonly ItemStack WithDurability(int durability) =>
-            IsEmpty ? Empty : new ItemStack(ItemId, Quantity, Math.Max(0, durability), ContentsHandle, AmmoId, AmmoCount);
+            IsEmpty ? Empty : new ItemStack(ItemId, Quantity, Math.Max(0, durability), ContentsHandle, AmmoId, AmmoCount, Rotated, Attachments);
 
         public readonly ItemStack WithLoadedAmmo(string ammoId, int ammoCount) =>
-            IsEmpty ? Empty : new ItemStack(ItemId, Quantity, Durability, ContentsHandle, ammoId, Math.Max(0, ammoCount));
+            IsEmpty ? Empty : new ItemStack(ItemId, Quantity, Durability, ContentsHandle, ammoId, Math.Max(0, ammoCount), Rotated, Attachments);
+
+        public readonly ItemStack WithRotation(bool rotated) =>
+            IsEmpty ? Empty : new ItemStack(ItemId, Quantity, Durability, ContentsHandle, AmmoId, AmmoCount, rotated, Attachments);
+
+        public readonly ItemStack WithAttachments(string attachments) =>
+            IsEmpty ? Empty : new ItemStack(ItemId, Quantity, Durability, ContentsHandle, AmmoId, AmmoCount, Rotated, attachments);
 
         public readonly bool Equals(ItemStack other) =>
             (IsEmpty && other.IsEmpty) ||
             (Quantity == other.Quantity && Durability == other.Durability && ContentsHandle == other.ContentsHandle &&
-             AmmoCount == other.AmmoCount &&
+             AmmoCount == other.AmmoCount && Rotated == other.Rotated &&
+             string.Equals(NullIfEmpty(Attachments), NullIfEmpty(other.Attachments), StringComparison.Ordinal) &&
              string.Equals(ItemId, other.ItemId, StringComparison.Ordinal) &&
              string.Equals(NullIfEmpty(AmmoId), NullIfEmpty(other.AmmoId), StringComparison.Ordinal));
 
@@ -84,7 +102,8 @@ namespace ExtractionShooter.Core.Inventory
         public override readonly bool Equals(object obj) => obj is ItemStack other && Equals(other);
 
         public override readonly int GetHashCode() =>
-            IsEmpty ? 0 : HashCode.Combine(ItemId, Quantity, Durability, ContentsHandle, NullIfEmpty(AmmoId), AmmoCount);
+            IsEmpty ? 0 : HashCode.Combine(ItemId, Quantity, Durability, ContentsHandle, NullIfEmpty(AmmoId), AmmoCount, Rotated,
+                NullIfEmpty(Attachments));
 
         public override readonly string ToString()
         {
@@ -92,6 +111,8 @@ namespace ExtractionShooter.Core.Inventory
             string state = Durability != 0 ? $" dur {Durability}" : string.Empty;
             if (HasContents) state += $" bag #{ContentsObjectId}";
             if (!string.IsNullOrEmpty(AmmoId) || AmmoCount != 0) state += $" {AmmoId} x{AmmoCount} loaded";
+            if (Rotated) state += " rotated";
+            if (!string.IsNullOrEmpty(Attachments)) state += $" [{Attachments}]";
             return $"{ItemId} x{Quantity}{state}";
         }
 

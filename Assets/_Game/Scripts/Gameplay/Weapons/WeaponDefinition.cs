@@ -1,3 +1,4 @@
+using ExtractionShooter.Core.Combat;
 using ExtractionShooter.Gameplay.Inventory;
 using UnityEngine;
 
@@ -24,8 +25,8 @@ namespace ExtractionShooter.Gameplay.Weapons
     }
 
     /// <summary>
-    /// A hitscan firearm. The weapon fixes caliber, magazine, fire rate, spread, range and reload time;
-    /// the loaded <see cref="AmmoDefinition"/> fixes damage and penetration.
+    /// A firearm. The weapon fixes caliber, magazine, fire rate, spread, range, muzzle velocity (bullet drop), recoil
+    /// and reload time; the loaded <see cref="AmmoDefinition"/> fixes damage and penetration.
     /// Loaded ammo is stored per weapon instance on its <see cref="Core.Inventory.ItemStack"/>.
     /// </summary>
     [CreateAssetMenu(fileName = "Weapon", menuName = "Extraction Shooter/Items/Weapon")]
@@ -44,10 +45,51 @@ namespace ExtractionShooter.Gameplay.Weapons
         [SerializeField, Min(1f)] private float _roundsPerMinute = 700f;
         [SerializeField, Min(1f)] private float _range = 300f;
 
+        [Tooltip("Muzzle velocity in m/s. Slower bullets drop more over distance (see Ballistics).")]
+        [SerializeField, Range(50f, 1500f)] private float _muzzleVelocity = 800f;
+
         [Tooltip("Cone half-angle in degrees for each shot.")]
         [SerializeField, Range(0f, 15f)] private float _spread = 0.6f;
 
         [SerializeField] private LayerMask _hitMask = ~0;
+
+        [Header("Aiming")]
+        [Tooltip("Hip fire spread = spread x this. Aiming down sights uses the plain spread.")]
+        [SerializeField, Min(1f)] private float _hipSpreadMultiplier = 3f;
+
+        [Tooltip("Extra cone half-angle (degrees) at full movement speed; halved while aiming.")]
+        [SerializeField, Range(0f, 10f)] private float _moveSpread = 2f;
+
+        [Tooltip("Seconds to raise the sights.")]
+        [SerializeField, Min(0f)] private float _aimSeconds = 0.25f;
+
+        [Tooltip("Camera field of view while aiming (zoom).")]
+        [SerializeField, Range(5f, 90f)] private float _aimFieldOfView = 50f;
+
+        [Tooltip("Shows a scope overlay instead of iron-sight dots when fully aimed.")]
+        [SerializeField] private bool _scoped;
+
+        [Header("Recoil")]
+        [Tooltip("Degrees the view climbs per shot at the start of a spray (eases to about half during long sprays).")]
+        [SerializeField, Range(0f, 8f)] private float _recoilVertical = 0.6f;
+
+        [Tooltip("Largest sideways kick per shot in degrees.")]
+        [SerializeField, Range(0f, 4f)] private float _recoilHorizontal = 0.25f;
+
+        [Tooltip("Sideways drift of the pattern: -1 left, 0 even sway, 1 right.")]
+        [SerializeField, Range(-1f, 1f)] private float _recoilHorizontalBias;
+
+        [Tooltip("Picks the shape of the sideways sway. Fixed per weapon so the spray pattern can be learned.")]
+        [SerializeField] private int _recoilPatternSeed = 1;
+
+        [Tooltip("Largest random wobble per shot in degrees, on top of the pattern.")]
+        [SerializeField, Range(0f, 2f)] private float _recoilJitter = 0.08f;
+
+        [Tooltip("How fast the view settles back after firing stops (per second, exponential).")]
+        [SerializeField, Range(0.5f, 30f)] private float _recoilRecovery = 7f;
+
+        [Tooltip("Seconds after the fire interval without shooting before the pattern starts over from the first shot.")]
+        [SerializeField, Range(0f, 2f)] private float _recoilResetSeconds = 0.2f;
 
         [Header("Server validation")]
         [Tooltip("Seconds of slack allowed on the fire-rate check for network jitter.")]
@@ -64,8 +106,21 @@ namespace ExtractionShooter.Gameplay.Weapons
         public float RoundsPerMinute => _roundsPerMinute;
         public float SecondsBetweenShots => 60f / _roundsPerMinute;
         public float Range => _range;
+        public float MuzzleVelocity => _muzzleVelocity;
         public float Spread => _spread;
         public LayerMask HitMask => _hitMask;
+        public float HipSpreadMultiplier => _hipSpreadMultiplier;
+        public float MoveSpread => _moveSpread;
+        public float AimSeconds => _aimSeconds;
+        public float AimFieldOfView => _aimFieldOfView;
+        public bool Scoped => _scoped;
+        public RecoilProfile Recoil =>
+            new RecoilProfile(_recoilVertical, _recoilHorizontal, _recoilHorizontalBias, _recoilPatternSeed, _recoilJitter);
+        public float RecoilRecovery => _recoilRecovery;
+
+        /// <summary>Pause after which the recoil pattern starts over (one shot interval plus the reset seconds).</summary>
+        public double RecoilResetSeconds => RecoilPattern.ResetSeconds(SecondsBetweenShots, _recoilResetSeconds);
+
         public float FireRateTolerance => _fireRateTolerance;
         public float MaxOriginError => _maxOriginError;
 
@@ -73,5 +128,9 @@ namespace ExtractionShooter.Gameplay.Weapons
         public override int MaxStack => 1;
 
         public bool Accepts(AmmoDefinition ammo) => ammo != null && ammo.Caliber == _caliber;
+
+        /// <summary>Muzzle velocity (m/s) firing the given round: the weapon's, scaled by the round's multiplier.</summary>
+        public float MuzzleVelocityWith(AmmoDefinition ammo) =>
+            _muzzleVelocity * (ammo != null ? ammo.MuzzleVelocityMultiplier : 1f);
     }
 }

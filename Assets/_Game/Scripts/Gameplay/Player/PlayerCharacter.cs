@@ -6,6 +6,7 @@ using ExtractionShooter.Gameplay.Input;
 using ExtractionShooter.Gameplay.Interaction;
 using ExtractionShooter.Gameplay.Inventory;
 using ExtractionShooter.Gameplay.Raid;
+using ExtractionShooter.Gameplay.Throwables;
 using ExtractionShooter.Gameplay.Weapons;
 using FishNet.Object;
 using UnityEngine;
@@ -38,10 +39,16 @@ namespace ExtractionShooter.Gameplay.Player
         public PlayerMotor Motor { get; private set; }
         public PlayerLook Look { get; private set; }
         public PlayerInventory Inventory { get; private set; }
+
+        /// <summary>Bleeding, fractures and treatment (may be null on characters without it).</summary>
+        public PlayerInjuries Injuries { get; private set; }
         public PlayerEquipment Equipment { get; private set; }
         public PlayerInteractor Interactor { get; private set; }
         public WeaponReloader Reloader { get; private set; }
         public PlayerRaid Raid { get; private set; }
+
+        /// <summary>Grenades: throwing, the selected type, flash white-outs (may be null on characters without it).</summary>
+        public PlayerThrowables Throwables { get; private set; }
 
         /// <summary>Owner-only input. Null-safe on other peers: returns neutral input.</summary>
         public IPlayerInput Input => IsOwner && _input != null ? _input : NeutralInput.Instance;
@@ -52,10 +59,12 @@ namespace ExtractionShooter.Gameplay.Player
             Motor = GetComponent<PlayerMotor>();
             Look = GetComponent<PlayerLook>();
             Inventory = GetComponent<PlayerInventory>();
+            Injuries = GetComponent<PlayerInjuries>();
             Equipment = GetComponent<PlayerEquipment>();
             Interactor = GetComponent<PlayerInteractor>();
             Reloader = GetComponent<WeaponReloader>();
             Raid = GetComponent<PlayerRaid>();
+            Throwables = GetComponent<PlayerThrowables>();
 
             if (_input == null)
                 Debug.LogError($"[{nameof(PlayerCharacter)}] Input is not assigned on {name}.", this);
@@ -114,12 +123,19 @@ namespace ExtractionShooter.Gameplay.Player
             public Vector2 LookDelta => Vector2.zero;
             public bool JumpHeld => false;
             public bool FireHeld => false;
+            public bool AimHeld => false;
+            public bool SprintHeld => false;
+            public bool CrouchPressed => false;
+            public bool MeleePressed => false;
             public bool FirePressed => false;
             public bool ReloadPressed => false;
             public bool InteractPressed => false;
             public bool ToggleInventoryPressed => false;
+            public bool ToggleMapPressed => false;
             public int WeaponSlotPressed => -1;
             public bool CycleWeaponPressed => false;
+            public bool ThrowPressed => false;
+            public bool CycleThrowablePressed => false;
             public bool SingleItemModifierHeld => false;
         }
     }

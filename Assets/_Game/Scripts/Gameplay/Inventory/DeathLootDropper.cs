@@ -7,15 +7,16 @@ using UnityEngine;
 namespace ExtractionShooter.Gameplay.Inventory
 {
     /// <summary>
-    /// Server only: the extraction rule. On death every equipped item moves into a lootable corpse
-    /// at the death position. Bags keep their contents; armor keeps its durability.
-    /// The player respawns with only the starting loadout.
+    /// Server only: the extraction rule. On death every equipped item and everything in the pockets moves into a
+    /// lootable corpse at the death position. Bags keep their contents; armor keeps its durability.
+    /// Kept slots (the knife) stay on the character for the session to take back; the safe box is never on the
+    /// character at all, so it cannot be looted.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCharacter), typeof(PlayerEquipment))]
     public sealed class DeathLootDropper : NetworkBehaviour
     {
-        [Tooltip("Networked prefab with an ItemContainer (access: World), at least 7 slots.")]
+        [Tooltip("Networked prefab with an ItemContainer (access: World), a grid big enough for a full kit.")]
         [SerializeField] private ItemContainer _corpsePrefab;
 
         private PlayerCharacter _character;
@@ -45,19 +46,40 @@ namespace ExtractionShooter.Gameplay.Inventory
         private void OnServerDied(DamageInfo damage)
         {
             SlotInventory gear = _equipment.Container != null ? _equipment.Container.ServerInventory : null;
-            if (gear == null || gear.IsEmpty || _corpsePrefab == null) return;
+            SlotInventory pockets = _equipment.Pockets != null ? _equipment.Pockets.ServerInventory : null;
+            if (gear == null || _corpsePrefab == null) return;
+            if (!HasDroppableGear(gear) && (pockets == null || pockets.IsEmpty)) return;
 
             ItemContainer corpse = Instantiate(_corpsePrefab, transform.position, transform.rotation);
             Spawn(corpse.NetworkObject);
+            SlotInventory body = corpse.ServerInventory;
 
-            if (!gear.TransferAllTo(corpse.ServerInventory))
+            // Equipment first (the slots that survive death stay on the character), then pockets.
+            bool allMoved = true;
+            for (int slot = 0; slot < gear.Capacity; slot++)
             {
-                Debug.LogWarning($"[{nameof(DeathLootDropper)}] Corpse could not hold all gear; the rest is destroyed.", this);
-                for (int i = 0; i < gear.Capacity; i++)
-                    ItemFactory.ServerDestroy(NetworkManager, gear[i]);
+                if (gear[slot].IsEmpty || EquipmentRules.IsKeptOnDeath((EquipmentSlot)slot)) continue;
+                if (gear.TransferTo(body, slot) != InventoryResult.Success) allMoved = false;
             }
+            if (pockets != null && !pockets.TransferAllTo(body)) allMoved = false;
 
-            gear.Clear();
+            if (!allMoved)
+                Debug.LogWarning($"[{nameof(DeathLootDropper)}] Corpse could not hold all gear; the rest is destroyed.", this);
+
+            for (int slot = 0; slot < gear.Capacity; slot++)
+            {
+                if (gear[slot].IsEmpty || EquipmentRules.IsKeptOnDeath((EquipmentSlot)slot)) continue;
+                ItemFactory.ServerDestroy(NetworkManager, gear[slot]);
+                gear.TakeFromSlot(slot, gear[slot].Quantity);
+            }
+            pockets?.Clear();
+        }
+
+        private static bool HasDroppableGear(SlotInventory gear)
+        {
+            for (int slot = 0; slot < gear.Capacity; slot++)
+                if (!gear[slot].IsEmpty && !EquipmentRules.IsKeptOnDeath((EquipmentSlot)slot)) return true;
+            return false;
         }
     }
 }

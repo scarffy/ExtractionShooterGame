@@ -12,7 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8237add17cd84e5cacea58d911a6514, type: 3}
   m_Name: DefaultMovementSettings
   m_EditorClassIdentifier:
-  _walkSpeed: 5
+  _walkSpeed: 4.5
   _jumpSpeed: 5
   _gravity: 15
   _groundedStickVelocity: 1
+  _sprintSpeed: 7
+  _maxStamina: 100
+  _sprintDrainPerSecond: 18
+  _staminaRegenPerSecond: 14
+  _staminaRegenDelay: 1
+  _minStaminaToSprint: 15
+  _jumpStaminaCost: 8
+  _crouchSpeed: 2.4
+  _standingHeight: 2
+  _crouchingHeight: 1.3
+  _aimingSpeedMultiplier: 0.6
+  _fracturedSpeedMultiplier: 0.55

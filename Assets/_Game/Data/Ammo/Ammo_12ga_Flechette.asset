@@ -25,3 +25,6 @@ MonoBehaviour:
   _armorDamagePercent: 40
   _projectiles: 8
   _extraSpread: 2.5
+  _muzzleVelocityMultiplier: 1.15
+  _width: 1
+  _height: 1

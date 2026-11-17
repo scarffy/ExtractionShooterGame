@@ -20,5 +20,8 @@ MonoBehaviour:
   _maxStack: 1
   _value: 700
   _containerKind: 1
-  _capacity: 24
+  _gridWidth: 6
+  _gridHeight: 4
   _storagePrefab: {fileID: 89061260635832939, guid: ffa87cea709d4208909e7ac53095888d, type: 3}
+  _width: 4
+  _height: 4

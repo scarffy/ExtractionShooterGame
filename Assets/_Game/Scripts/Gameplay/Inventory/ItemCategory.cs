@@ -9,5 +9,8 @@ namespace ExtractionShooter.Gameplay.Inventory
         Valuable = 3,
         Weapon = 4,
         Armor = 5,
+        Melee = 6,
+        Attachment = 7,
+        Throwable = 8,
     }
 }

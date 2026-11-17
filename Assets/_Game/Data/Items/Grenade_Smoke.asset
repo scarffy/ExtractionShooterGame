@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4adc4f35b95043c59c751aaac303e964, type: 3}
+  m_Name: Grenade_Smoke
+  m_EditorClassIdentifier:
+  _id: grenade_smoke
+  _displayName: Smoke Grenade
+  _description: Thick white smoke for about 20 seconds. Nobody sees through it.
+  _icon: {fileID: 0}
+  _category: 8
+  _maxStack: 1
+  _value: 70
+  _kind: 1
+  _fuseSeconds: 1.5
+  _throwSpeed: 13
+  _noiseRange: 20
+  _innerRadius: 0
+  _radius: 5
+  _damage: 0
+  _legShare: 0
+  _penetration: 0
+  _armorDamagePercent: 0
+  _flashMinSeconds: 0
+  _flashMaxSeconds: 0
+  _flashFullAngle: 45
+  _flashZeroAngle: 115
+  _smokeSeconds: 20
+  _smokeGrowSeconds: 2.5
+  _smokeFadeSeconds: 3
+  _width: 1
+  _height: 1

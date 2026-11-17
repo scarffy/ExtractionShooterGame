@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f24ca7be73214258b52cbdaaf78b223d, type: 3}
+  m_Name: BotSettings_ScavShotgun
+  m_EditorClassIdentifier:
+  _weapon: {fileID: 11400000, guid: e552cb167a8f4684a00c44cc22123298, type: 2}
+  _ammo: {fileID: 11400000, guid: 42de4337e5b049cb87a271973a31fc88, type: 2}
+  _attachments: []
+  _aimError: 3.0
+  _firstShotErrorMultiplier: 4
+  _aimSettleSeconds: 3.5
+  _verticalErrorScale: 0.4
+  _headshotChance: 0.08
+  _burstMin: 1
+  _burstMax: 1
+  _burstPauseMin: 0.4
+  _burstPauseMax: 1
+  _sightRange: 32
+  _fieldOfView: 120
+  _hearingRange: 6
+  _reactionSeconds: 1.2
+  _insertionGraceSeconds: 20
+  _thinkInterval: 0.2
+  _gunshotHearingRange: 40
+  _coverSeconds: 3
+  _flankAfterSeconds: 3
+  _flankOffset: 7
+  _loseSightSeconds: 1.5
+  _searchSeconds: 6
+  _patrolSpeed: 2.2
+  _chaseSpeed: 4
+  _patrolRadius: 15
+  _engageDistance: 10
+  _turnSpeed: 360
+  _chestHeight: 1.25
+  _headHeight: 1.65
+  _lootTable: {fileID: 11400000, guid: f1dd54b940c246a1b791f0a5699e5352, type: 2}
+  _spareRoundsMin: 10
+  _spareRoundsMax: 30

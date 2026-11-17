@@ -26,13 +26,20 @@ namespace ExtractionShooter.Gameplay.Input
         private InputAction _lookStick;
         private InputAction _jump;
         private InputAction _fire;
+        private InputAction _aim;
+        private InputAction _sprint;
+        private InputAction _crouch;
+        private InputAction _melee;
         private InputAction _reload;
         private InputAction _interact;
         private InputAction _toggleInventory;
+        private InputAction _toggleMap;
         private InputAction _weapon1;
         private InputAction _weapon2;
         private InputAction _weapon3;
         private InputAction _cycleWeapon;
+        private InputAction _throw;
+        private InputAction _cycleThrowable;
         private InputAction _singleItemModifier;
         private InputAction _togglePause;
 
@@ -55,6 +62,14 @@ namespace ExtractionShooter.Gameplay.Input
 
         public bool FireHeld => IsGameplayActive && _fire.IsPressed();
 
+        public bool AimHeld => IsGameplayActive && _aim.IsPressed();
+
+        public bool SprintHeld => IsGameplayActive && _sprint.IsPressed();
+
+        public bool CrouchPressed => IsGameplayActive && _crouch.WasPressedThisFrame();
+
+        public bool MeleePressed => IsGameplayActive && _melee.WasPressedThisFrame();
+
         public bool FirePressed => IsGameplayActive && _fire.WasPressedThisFrame();
 
         public bool ReloadPressed => IsGameplayActive && _reload.WasPressedThisFrame();
@@ -62,6 +77,8 @@ namespace ExtractionShooter.Gameplay.Input
         public bool InteractPressed => IsGameplayActive && _interact.WasPressedThisFrame();
 
         public bool ToggleInventoryPressed => _toggleInventory.WasPressedThisFrame();
+
+        public bool ToggleMapPressed => _toggleMap.WasPressedThisFrame();
 
         public int WeaponSlotPressed
         {
@@ -76,6 +93,10 @@ namespace ExtractionShooter.Gameplay.Input
         }
 
         public bool CycleWeaponPressed => IsGameplayActive && _cycleWeapon.WasPressedThisFrame();
+
+        public bool ThrowPressed => IsGameplayActive && _throw.WasPressedThisFrame();
+
+        public bool CycleThrowablePressed => IsGameplayActive && _cycleThrowable.WasPressedThisFrame();
 
         public bool SingleItemModifierHeld => _singleItemModifier.IsPressed();
 
@@ -100,6 +121,18 @@ namespace ExtractionShooter.Gameplay.Input
             _fire = new InputAction("Fire", InputActionType.Button, "<Mouse>/leftButton");
             _fire.AddBinding("<Gamepad>/rightTrigger");
 
+            _aim = new InputAction("Aim", InputActionType.Button, "<Mouse>/rightButton");
+            _aim.AddBinding("<Gamepad>/leftTrigger");
+
+            _sprint = new InputAction("Sprint", InputActionType.Button, "<Keyboard>/leftShift");
+            _sprint.AddBinding("<Gamepad>/leftStickPress");
+
+            _crouch = new InputAction("Crouch", InputActionType.Button, "<Keyboard>/c");
+            _crouch.AddBinding("<Gamepad>/rightStickPress");
+
+            _melee = new InputAction("Melee", InputActionType.Button, "<Keyboard>/v");
+            _melee.AddBinding("<Gamepad>/rightShoulder");
+
             _reload = new InputAction("Reload", InputActionType.Button, "<Keyboard>/r");
             _reload.AddBinding("<Gamepad>/buttonEast");
 
@@ -109,10 +142,17 @@ namespace ExtractionShooter.Gameplay.Input
             _toggleInventory = new InputAction("ToggleInventory", InputActionType.Button, "<Keyboard>/tab");
             _toggleInventory.AddBinding("<Gamepad>/select");
 
+            _toggleMap = new InputAction("ToggleMap", InputActionType.Button, "<Keyboard>/m");
+
             _weapon1 = new InputAction("Weapon1", InputActionType.Button, "<Keyboard>/1");
             _weapon2 = new InputAction("Weapon2", InputActionType.Button, "<Keyboard>/2");
             _weapon3 = new InputAction("Weapon3", InputActionType.Button, "<Keyboard>/3");
             _cycleWeapon = new InputAction("CycleWeapon", InputActionType.Button, "<Gamepad>/buttonNorth");
+
+            _throw = new InputAction("Throw", InputActionType.Button, "<Keyboard>/g");
+            _throw.AddBinding("<Gamepad>/leftShoulder");
+            _cycleThrowable = new InputAction("CycleThrowable", InputActionType.Button, "<Keyboard>/b");
+            _cycleThrowable.AddBinding("<Gamepad>/dpad/left");
 
             _singleItemModifier = new InputAction("SingleItemModifier", InputActionType.Button, "<Keyboard>/leftAlt");
             _singleItemModifier.AddBinding("<Keyboard>/rightAlt");
@@ -140,21 +180,28 @@ namespace ExtractionShooter.Gameplay.Input
             _lookStick.Dispose();
             _jump.Dispose();
             _fire.Dispose();
+            _aim.Dispose();
+            _sprint.Dispose();
+            _crouch.Dispose();
+            _melee.Dispose();
             _reload.Dispose();
             _interact.Dispose();
             _toggleInventory.Dispose();
+            _toggleMap.Dispose();
             _weapon1.Dispose();
             _weapon2.Dispose();
             _weapon3.Dispose();
             _cycleWeapon.Dispose();
+            _throw.Dispose();
+            _cycleThrowable.Dispose();
             _singleItemModifier.Dispose();
             _togglePause.Dispose();
         }
 
         private void SetActionsEnabled(bool enabled)
         {
-            InputAction[] actions = { _move, _lookPointer, _lookStick, _jump, _fire, _reload, _interact, _toggleInventory,
-                _weapon1, _weapon2, _weapon3, _cycleWeapon, _singleItemModifier, _togglePause };
+            InputAction[] actions = { _move, _lookPointer, _lookStick, _jump, _fire, _aim, _sprint, _crouch, _melee, _reload, _interact, _toggleInventory, _toggleMap,
+                _weapon1, _weapon2, _weapon3, _cycleWeapon, _throw, _cycleThrowable, _singleItemModifier, _togglePause };
             foreach (InputAction action in actions)
             {
                 if (enabled) action.Enable();

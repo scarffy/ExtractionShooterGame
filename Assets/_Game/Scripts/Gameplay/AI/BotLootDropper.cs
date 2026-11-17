@@ -65,6 +65,7 @@ namespace ExtractionShooter.Gameplay.AI
             if (settings.Weapon != null)
             {
                 ItemStack weapon = ItemFactory.ServerCreate(NetworkManager, settings.Weapon);
+                if (!weapon.IsEmpty) weapon = weapon.WithAttachments(settings.AttachmentsText);
                 if (!weapon.IsEmpty && settings.Ammo != null && _brain.RoundsLoaded > 0)
                     weapon = weapon.WithLoadedAmmo(settings.Ammo.Id, _brain.RoundsLoaded);
                 body.TryAdd(weapon, out _);

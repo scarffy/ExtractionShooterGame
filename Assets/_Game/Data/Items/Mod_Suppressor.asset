@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f503239faa34e61a23ea1e149776bc3, type: 3}
+  m_Name: Mod_Suppressor
+  m_EditorClassIdentifier:
+  _id: suppressor
+  _displayName: Suppressor
+  _description: Shots are quieter and carry far less.
+  _icon: {fileID: 0}
+  _category: 7
+  _maxStack: 1
+  _value: 900
+  _slot: 1
+  _fitsPrimary: 1
+  _fitsPistol: 1
+  _spreadMultiplier: 0.95
+  _hipSpreadMultiplier: 1
+  _aimSecondsMultiplier: 1.1
+  _aimFieldOfView: 0
+  _scoped: 0
+  _magazineBonus: 0
+  _soundRangeMultiplier: 0.35
+  _recoilMultiplier: 0.9
+  _width: 2
+  _height: 1

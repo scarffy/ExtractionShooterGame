@@ -11,8 +11,11 @@ namespace ExtractionShooter.Gameplay.Inventory
         /// <summary>Player equipment: one typed slot per <see cref="EquipmentSlot"/>.</summary>
         Equipment = 1,
 
-        /// <summary>Bag storage: anything except other bags.</summary>
+        /// <summary>Bag storage and the safe box: anything except other bags.</summary>
         Storage = 2,
+
+        /// <summary>Pockets: small (1x1) items only, no bags.</summary>
+        Pockets = 3,
     }
 
     internal static class SlotFilters
@@ -23,6 +26,7 @@ namespace ExtractionShooter.Gameplay.Inventory
             {
                 case ContainerSlotRules.Equipment: return new EquipmentSlotFilter(database);
                 case ContainerSlotRules.Storage: return StorageSlotFilter.Instance;
+                case ContainerSlotRules.Pockets: return new PocketSlotFilter(database);
                 default: return AcceptAllSlotFilter.Instance;
             }
         }
@@ -37,6 +41,17 @@ namespace ExtractionShooter.Gameplay.Inventory
                 slot >= 0 && slot < EquipmentRules.SlotCount &&
                 _database != null && _database.TryGet(stack.ItemId, out ItemDefinition item) &&
                 EquipmentRules.Accepts((EquipmentSlot)slot, item);
+        }
+
+        /// <summary>Only items a single cell big, and never bags.</summary>
+        private sealed class PocketSlotFilter : ISlotFilter
+        {
+            private readonly ItemDatabase _database;
+
+            public PocketSlotFilter(ItemDatabase database) => _database = database;
+
+            public bool CanAccept(int slot, in ItemStack stack) =>
+                !stack.HasContents && _database != null && _database.GetSize(stack.ItemId).Area == 1;
         }
 
         /// <summary>No bags inside bags: keeps storage one level deep and makes cycles impossible.</summary>

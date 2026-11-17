@@ -14,9 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   _id: bandage
   _displayName: Bandage
-  _description: Patches up light wounds.
+  _description: Stops bleeding and patches up light wounds.
   _icon: {fileID: 0}
   _category: 2
   _maxStack: 5
   _value: 15
-  _healAmount: 15
+  _healAmount: 10
+  _useSeconds: 2.5
+  _stopsBleeding: 1
+  _fixesFracture: 0
+  _width: 1
+  _height: 1

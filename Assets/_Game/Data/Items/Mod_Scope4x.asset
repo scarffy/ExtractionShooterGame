@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f503239faa34e61a23ea1e149776bc3, type: 3}
+  m_Name: Mod_Scope4x
+  m_EditorClassIdentifier:
+  _id: scope_4x
+  _displayName: 4x Combat Scope
+  _description: Magnified optic for mid-range work.
+  _icon: {fileID: 0}
+  _category: 7
+  _maxStack: 1
+  _value: 1200
+  _slot: 0
+  _fitsPrimary: 1
+  _fitsPistol: 0
+  _spreadMultiplier: 0.9
+  _hipSpreadMultiplier: 1.1
+  _aimSecondsMultiplier: 1.3
+  _aimFieldOfView: 22
+  _scoped: 1
+  _magazineBonus: 0
+  _soundRangeMultiplier: 1
+  _recoilMultiplier: 1
+  _width: 2
+  _height: 1

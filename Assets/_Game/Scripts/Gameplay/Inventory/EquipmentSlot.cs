@@ -12,12 +12,15 @@ namespace ExtractionShooter.Gameplay.Inventory
         Primary1 = 4,
         Primary2 = 5,
         Pistol = 6,
+
+        /// <summary>The knife. Never lost: it stays with the player through death.</summary>
+        Melee = 7,
     }
 
     /// <summary>Which item types each equipment slot accepts.</summary>
     public static class EquipmentRules
     {
-        public const int SlotCount = 7;
+        public const int SlotCount = 8;
 
         public static readonly EquipmentSlot[] WeaponSlots =
             { EquipmentSlot.Primary1, EquipmentSlot.Primary2, EquipmentSlot.Pistol };
@@ -39,10 +42,15 @@ namespace ExtractionShooter.Gameplay.Inventory
                     return item is WeaponDefinition primary && primary.WeaponClass == WeaponClass.Primary;
                 case EquipmentSlot.Pistol:
                     return item is WeaponDefinition pistol && pistol.WeaponClass == WeaponClass.Pistol;
+                case EquipmentSlot.Melee:
+                    return item is MeleeDefinition;
                 default:
                     return false;
             }
         }
+
+        /// <summary>Slots whose item survives death (stays with the player instead of dropping on the corpse).</summary>
+        public static bool IsKeptOnDeath(EquipmentSlot slot) => slot == EquipmentSlot.Melee;
 
         public static bool IsWeaponSlot(EquipmentSlot slot) =>
             slot == EquipmentSlot.Primary1 || slot == EquipmentSlot.Primary2 || slot == EquipmentSlot.Pistol;

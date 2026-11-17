@@ -168,9 +168,9 @@ namespace ExtractionShooter.UI.Hideout
             if (item == null) return false;
             switch (filter)
             {
-                case Filter.Weapons: return item.Category == ItemCategory.Weapon;
+                case Filter.Weapons: return item.Category == ItemCategory.Weapon || item.Category == ItemCategory.Attachment;
                 case Filter.Ammo: return item.Category == ItemCategory.Ammo;
-                case Filter.Gear: return item.Category == ItemCategory.Armor || item is ContainerItemDefinition;
+                case Filter.Gear: return item.Category == ItemCategory.Armor || item.Category == ItemCategory.Throwable || item is ContainerItemDefinition;
                 case Filter.Medical: return item.Category == ItemCategory.Medical;
                 default: return true;
             }

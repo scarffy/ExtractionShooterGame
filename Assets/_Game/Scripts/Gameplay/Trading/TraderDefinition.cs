@@ -24,10 +24,15 @@ namespace ExtractionShooter.Gameplay.Trading
 
         [SerializeField] private List<TraderOffer> _offers = new List<TraderOffer>();
 
+        [Tooltip("Safe box sizes in upgrade order. The first is the free box every player starts with (its price is ignored).")]
+        [SerializeField] private List<SafeBoxTier> _safeBoxTiers = new List<SafeBoxTier> { SafeBoxTier.Default };
+
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
         public float SellRatio => _sellRatio;
         public float BuyMarkup => _buyMarkup;
         public IReadOnlyList<TraderOffer> Offers => _offers;
+        public IReadOnlyList<SafeBoxTier> SafeBoxTiers => _safeBoxTiers;
+        internal SafeBoxTier[] SafeBoxTiersArray => _safeBoxTiers.ToArray();
 
         public bool TryGetOffer(int index, out TraderOffer offer)
         {
@@ -66,6 +71,32 @@ namespace ExtractionShooter.Gameplay.Trading
                 if (offer != null && offer.Item != null && offer.Quantity > offer.Item.MaxStack)
                     Debug.LogWarning($"[{nameof(TraderDefinition)}] '{name}': {offer.Item.name} is sold in packs above its max stack.", this);
         }
+    }
+
+    /// <summary>One safe box size and what upgrading to it costs.</summary>
+    [Serializable]
+    public struct SafeBoxTier
+    {
+        [SerializeField] private string _name;
+        [SerializeField, Min(1)] private int _width;
+        [SerializeField, Min(1)] private int _height;
+        [SerializeField, Min(0)] private long _price;
+
+        public SafeBoxTier(string name, int width, int height, long price)
+        {
+            _name = name;
+            _width = width;
+            _height = height;
+            _price = price;
+        }
+
+        /// <summary>The free box: two cells side by side.</summary>
+        public static SafeBoxTier Default => new SafeBoxTier("Safe Box", 2, 1, 0);
+
+        public string Name => string.IsNullOrEmpty(_name) ? $"Safe Box {Width}x{Height}" : _name;
+        public int Width => Mathf.Max(1, _width);
+        public int Height => Mathf.Max(1, _height);
+        public long Price => _price;
     }
 
     /// <summary>One thing the trader sells, in packs of <see cref="Quantity"/> (ammo by the box).</summary>

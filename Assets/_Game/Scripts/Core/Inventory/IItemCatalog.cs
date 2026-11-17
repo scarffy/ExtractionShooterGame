@@ -10,5 +10,8 @@ namespace ExtractionShooter.Core.Inventory
 
         /// <summary>Maximum quantity per slot for the item (at least 1 for known items).</summary>
         int GetMaxStack(string itemId);
+
+        /// <summary>Grid footprint of the item, unrotated. 1x1 for unknown items.</summary>
+        ItemSize GetSize(string itemId);
     }
 }

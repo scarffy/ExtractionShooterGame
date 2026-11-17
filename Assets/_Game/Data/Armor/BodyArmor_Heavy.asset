@@ -24,3 +24,5 @@ MonoBehaviour:
   _maxDurability: 80
   _bluntThroughput: 0.15
   _wearMultiplier: 1.2
+  _width: 3
+  _height: 3

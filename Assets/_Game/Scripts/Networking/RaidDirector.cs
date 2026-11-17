@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using ExtractionShooter.Core.Combat;
+using ExtractionShooter.Core.Matchmaking;
 using ExtractionShooter.Core.Spawning;
 using ExtractionShooter.Gameplay.AI;
 using ExtractionShooter.Gameplay.Player;
@@ -14,9 +15,10 @@ namespace ExtractionShooter.Networking
 {
     /// <summary>
     /// Server-side raid loop. Gives every client a <see cref="PlayerSession"/> once it has loaded the
-    /// scene; when a session deploys, spawns a player character at a spawn point and hands it the loadout.
-    /// The raid ends on extraction (gear returns to the loadout) or death (gear stays on the corpse);
-    /// the character is then removed and the player is back in the hideout.
+    /// scene. When the <see cref="SquadLobby"/> sends a squad into a raid instance, spawns its members together at the
+    /// spawn point farthest from everyone else (other squads, bots), tags them with their squad, gives them the
+    /// instance's end time and hands them their loadouts. A player's raid ends on extraction (gear returns to the
+    /// loadout) or death (gear stays on the corpse); the character is then removed and the player is back in the hideout.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class RaidDirector : MonoBehaviour
@@ -30,6 +32,12 @@ namespace ExtractionShooter.Networking
 
         [Tooltip("Seconds a dead player watches before returning to the hideout.")]
         [SerializeField, Min(0f)] private float _deathDelay = 4f;
+
+        [Tooltip("Squads and matchmaking: raises the deploy requests.")]
+        [SerializeField] private SquadLobby _lobby;
+
+        [Tooltip("Metres between squadmates spawning at the same point.")]
+        [SerializeField, Min(0.5f)] private float _squadSpacing = 1.5f;
 
         private readonly Dictionary<PlayerCharacter, PlayerSession> _raids = new Dictionary<PlayerCharacter, PlayerSession>();
         private readonly HashSet<PlayerCharacter> _ending = new HashSet<PlayerCharacter>();
@@ -46,6 +54,7 @@ namespace ExtractionShooter.Networking
             if (_playerPrefab == null) Debug.LogError($"[{nameof(RaidDirector)}] Player prefab is not assigned.", this);
             if (_spawnPoints == null)
                 Debug.LogError($"[{nameof(RaidDirector)}] Spawn point source must implement {nameof(ISpawnPointProvider)}.", this);
+            if (_lobby == null) Debug.LogError($"[{nameof(RaidDirector)}] Squad lobby is not assigned: nobody can deploy.", this);
         }
 
         private void OnValidate()
@@ -62,12 +71,14 @@ namespace ExtractionShooter.Networking
         {
             if (_networkManager != null)
                 _networkManager.SceneManager.OnClientLoadedStartScenes += HandleClientLoadedStartScenes;
+            if (_lobby != null) _lobby.ServerSquadDeploying += DeploySquad;
         }
 
         private void OnDestroy()
         {
             if (_networkManager != null && _networkManager.SceneManager != null)
                 _networkManager.SceneManager.OnClientLoadedStartScenes -= HandleClientLoadedStartScenes;
+            if (_lobby != null) _lobby.ServerSquadDeploying -= DeploySquad;
 
             foreach (PlayerCharacter character in new List<PlayerCharacter>(_raids.Keys))
                 Unsubscribe(character);
@@ -81,25 +92,43 @@ namespace ExtractionShooter.Networking
             PlayerSession session = Instantiate(_sessionPrefab);
             session.name = $"Session {connection.ClientId}";
             _networkManager.ServerManager.Spawn(session.NetworkObject, connection);
-            session.ServerDeployRequested += Deploy;
         }
 
-        private void Deploy(PlayerSession session)
+        /// <summary>
+        /// One squad into the raid: the spawn point farthest from every living player and bot (squads deployed
+        /// earlier this tick are already standing at theirs), members side by side around it.
+        /// </summary>
+        private void DeploySquad(RaidInstance raid, int squadId, IReadOnlyList<PlayerSession> members)
         {
-            if (session == null || !session.IsSpawned || _playerPrefab == null || _spawnPoints == null) return;
+            if (raid == null || members == null || members.Count == 0 || _playerPrefab == null || _spawnPoints == null) return;
             ForgetDespawned();
-            if (_raids.ContainsValue(session)) return;
 
-            Pose pose = _spawnPoints.GetSafestSpawnPose(CollectThreats());
+            Pose point = _spawnPoints.GetSafestSpawnPose(CollectThreats());
+            int slot = 0;
+            foreach (PlayerSession session in members)
+            {
+                Vector3 offset = point.rotation * SpawnSelection.SquadOffset(slot, _squadSpacing);
+                if (Deploy(session, new Pose(point.position + offset, point.rotation), raid, squadId)) slot++;
+            }
+        }
+
+        private bool Deploy(PlayerSession session, Pose pose, RaidInstance raid, int squadId)
+        {
+            if (session == null || !session.IsSpawned || session.State != SessionState.Hideout || _raids.ContainsValue(session)) return false;
+
             PlayerCharacter character = Instantiate(_playerPrefab, pose.position, pose.rotation);
             _networkManager.ServerManager.Spawn(character.NetworkObject, session.Owner);
 
             _raids[character] = session;
             character.Health.ServerDied += OnCharacterDied;
             character.Raid.ServerExtracted += OnCharacterExtracted;
+            character.Raid.ServerSetRaidEnd(raid.EndTime);
+            SquadMember squad = character.GetComponent<SquadMember>();
+            if (squad != null) squad.ServerAssign(squadId, session.PlayerName);
 
             session.ServerBeginRaid(character);
-            Debug.Log($"[{nameof(RaidDirector)}] {session.PlayerName} deployed at {pose.position}.");
+            Debug.Log($"[{nameof(RaidDirector)}] {session.PlayerName} deployed into raid #{raid.Id} (squad {squadId}) at {pose.position}.");
+            return true;
         }
 
         /// <summary>Positions of living players and bots, to keep new arrivals away from them.</summary>

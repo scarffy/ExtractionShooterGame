@@ -72,6 +72,19 @@ namespace ExtractionShooter.Gameplay.Combat
             if (!IsAlive) ServerDied?.Invoke(applied);
         }
 
+        /// <summary>
+        /// Server only. Damage that skips armor and other modifiers (bleeding). Still reported through
+        /// <see cref="ServerDamaged"/> and can kill.
+        /// </summary>
+        public void ServerApplyDirect(in DamageInfo damage)
+        {
+            if (!IsServerInitialized || !IsAlive || damage.Amount <= 0) return;
+
+            _current.Value = Mathf.Max(0, _current.Value - damage.Amount);
+            ServerDamaged?.Invoke(damage);
+            if (!IsAlive) ServerDied?.Invoke(damage);
+        }
+
         /// <summary>Server only. Heals up to max health. Returns the amount healed.</summary>
         public int ServerHeal(int amount)
         {

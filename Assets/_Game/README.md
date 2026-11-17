@@ -38,7 +38,8 @@ interfaces in Core (`IDamageable`, `ISpawnPointProvider`) and C# events.
 - **Networking:** clients request, the server validates and decides. Server-only methods are
   prefixed `Server` (`ServerTeleport`, `ServerRestore`) and server-only events `Server*`.
   RPC methods are named for intent (`RequestShot`, `SubmitInput`, `BroadcastShot`).
-- **No editor generators** for scenes or prefabs. Scenes and prefabs are built by hand.
+- **No editor generators** for scenes or prefabs: scenes, prefabs and data assets are written as Unity YAML by an
+  offline tool outside the project, never by editor menu scripts.
 
 ## Player prefab
 | Component | Role |
@@ -58,34 +59,22 @@ interfaces in Core (`IDamageable`, `ISpawnPointProvider`) and C# events.
 | `NetworkObject`, `NetworkTransform` | FishNet; NetworkTransform is **server authoritative** |
 
 ## Inventory & equipment
-Server-authoritative and slot-based. Clients only send requests; the server validates every one.
+Server-authoritative, grid-based (Tetris-style). Clients only send requests; the server validates every one.
 
-**Equipment (7 slots, type-checked on the server):** Helmet · Body Armor · Chest Rig · Backpack ·
-Primary 1 · Primary 2 · Pistol. Pistols only go in the Pistol slot; primaries only in Primary 1/2.
+**Equipment (8 slots):** Helmet · Body Armor · Chest Rig · Backpack · Primary 1 · Primary 2 · Pistol · Melee.
+**Storage:** pockets (5 cells, always there, lost on death), the chest rig and backpack grids, and the **safe box**
+(2x1, upgradeable to 3x3 at the trader) which is kept on death. The knife in the melee slot is never lost.
+Items have footprints (a rifle is 4x2) and rotate with R while dragging. Bags carry their own networked grid and
+cannot go inside bags.
 
-**Storage** comes only from the equipped chest rig and backpack (no pockets). Each bag item owns a
-networked storage container that travels with it, so a full backpack stays full when dropped, stored in
-a crate or left on a body. Bags cannot go inside bags.
+**Weapons:** 14 weapons over 11 calibers, 32 ammo types (damage, penetration, armor damage, pellets, muzzle
+velocity). 1/2/3 select Primary 1/Primary 2/Pistol. R reloads from rig → pockets → backpack (`ReloadPlanner`).
+**Attachments:** 8 mods in 4 slots (optic, muzzle, grip, magazine): Red Dot, Holographic, 4x Scope, Suppressor,
+Compensator, Vertical Grip, Angled Grip, Extended Magazine. Drag a mod onto a weapon to fit it (a replaced mod comes
+back), right-click the weapon to remove the last one. Mods change spread, hip spread, aim time, zoom/scope,
+magazine size, recoil and how far shots are heard (`WeaponStats`, `WeaponModding`).
 
-**Weapons:** the active equipped weapon fires. 1/2/3 select Primary 1/Primary 2/Pistol (gamepad Y cycles).
-14 weapons over 11 calibers (Data/Weapons): Glock 17, M1911A1, Desert Eagle, MP5, MP7A1, UMP45, M4A1,
-AK-74M, AKM, SCAR-H, SR-25, SVD, AWM, M870. The weapon sets caliber, magazine, fire mode (semi/auto),
-fire rate, spread, range and reload time.
-
-**Ammo:** 32 types, 2–3 per caliber (Data/Ammo). The round sets damage, penetration, armor damage % and
-pellets (buckshot fires 9). Each weapon remembers which ammo is loaded and how many rounds
-(`ItemStack.AmmoId/AmmoCount`), so loaded rounds travel with the gun. R reloads from the rig, then the
-backpack: tops up the loaded type, otherwise switches to the first compatible type and puts the old
-rounds back (`ReloadPlanner`, unit-tested). Pulling the trigger on an empty gun starts a reload.
-Switching weapon, moving the gun or dying cancels a reload. Loot weapons spawn empty.
-
-**Armor:** hits land on head or body hitboxes (head x2 damage). Helmet protects the head, chest pad the
-body. Armor is class 1–6 and protects with class x 10, falling to half as it wears. Penetration equal to
-protection lets 50% through, +10 lets all through, -10 is stopped (blunt damage only). Every hit wears the
-armor by damage x armor damage % (`ArmorMath`, unit-tested). Broken armor does nothing.
-
-**Death:** all equipment moves into a lootable body (bags keep contents, armor keeps durability, guns keep
-their rounds). The body despawns after 5 minutes.
+**Armor:** head/body/legs hitboxes; helmet and chest pad, class 1–6, penetration vs class and wear (`ArmorMath`).
 
 | Piece | Where | Role |
 |---|---|---|
@@ -106,17 +95,18 @@ Item ids are stable strings saved in stashes and sent over the network: never re
 Known limitation: container contents replicate to all clients (a modified client could read other bags).
 
 ## Raid loop
-1. **Sign in** with a player name (3–16 letters, digits, `_` or `-`). The name is the profile: it is saved on the
-   server as `persistentDataPath/Profiles/<name>.json` (macOS editor: `~/Library/Application Support/<company>/<product>/Profiles`).
-   A new profile starts with the `DefaultLoadout` starter kit. One session per name at a time.
-2. **Hideout:** stash (60 slots) on the right, loadout + its rig and backpack on the left. Click moves stash ↔ loadout,
-   Alt+click moves one, drag places in a slot, right-click a bag in the stash opens it. Every change saves immediately.
-3. **Deploy:** the loadout goes onto a new character at a spawn point; empty magazines are loaded from carried ammo.
-   The profile is saved without it, so the gear is at risk.
-4. **Extract:** stand in a green extraction zone (North Gate, South Gate) for 8 s; leaving resets it. Everything you
-   carry comes back as your loadout. The raid lasts 20 minutes; whoever has not extracted is killed (MIA).
-5. **Die:** gear stays on your body; you return to the hideout after 4 s. If your loadout is empty you get the starter kit.
-   Leaving mid-raid (disconnect) loses the gear too.
+1. **Sign in** with a player name; the profile is saved on the server
+   (`persistentDataPath/Profiles/<name>.json`). New profiles get the starter kit and a knife, and no credits.
+2. **Hideout:** loadout, pockets, safe box, rig/backpack, a scrolling stash, character preview and gear value.
+   **Trader** tab: buys at 60% and sells at 125% of item value (unlimited stock), safe box upgrades.
+   **Squad** tab: create a squad (up to 4), join by code or invite by name, set Ready.
+3. **Find match:** the squad leader queues the whole (ready) squad. Matchmaking fills a raid (up to 12 players)
+   first-in first-out without splitting squads and launches after a 15 s countdown, or at once when full.
+   Raids run one at a time on this map; a squad may late-join a raid in its first 2 minutes, otherwise it waits for
+   the next one. Squadmates spawn together; squads spawn far apart. Bots and loot crates reset for each raid.
+4. **Extract:** hold position in a green extraction zone for 8 s. Everything you carry comes back.
+5. **Die:** gear stays on your body (except the safe box and knife). If you're broke and have no weapon, you get the
+   starter kit. Leaving mid-raid loses the gear too.
 
 | Piece | Where | Role |
 |---|---|---|
@@ -129,11 +119,38 @@ Known limitation: container contents replicate to all clients (a modified client
 | `OutOfBoundsKiller` + boundary walls | Networking / scene | Nobody walks off the map; anything below -20 m dies |
 | `StashScreen`, `RaidHudView` | UI | Sign-in + hideout screen; raid timer and extraction progress |
 
+## Combat
+- **Aiming:** hip fire has a wide cone that grows when moving; RMB raises the sights (zoom, tighter cone, slower
+  movement). Scoped optics show a scope overlay. The crosshair shows where shots can land.
+- **Recoil:** every weapon has a learnable pattern (climb + sway + small jitter), reduced by aiming, crouching and
+  attachments; the view recovers after you stop firing (`RecoilPattern`).
+- **Bullet drop:** shots follow a ballistic arc from the muzzle velocity, traced in segments (`Ballistics`,
+  `BallisticTrace`): ~6 cm at 100 m for an AWM, ~31 cm for an SMG.
+- **Movement:** sprint (stamina), crouch (smaller hitboxes, steadier aim), jump costs stamina.
+- **Knife:** V, server-validated melee.
+- **Injuries:** hits can cause bleeding; leg hits can fracture (slower movement). Bandage/Medkit stop bleeding,
+  Splint fixes a fracture; treatment takes time and can't be combined with shooting.
+- **Grenades:** G throws, B cycles frag / smoke / flash. Frag: radius damage blocked by cover (can bleed/fracture).
+  Smoke: 20 s cloud that bots can't see through. Flash: whites out players looking at it and blinds bots.
+- **Squads:** no friendly fire by default (`SquadLobby._friendlyFire`).
+- **Sound:** synthesized gunshots per weapon class, footsteps, reloads, knife, explosions; suppressors are quieter.
+
+## Bots
+Four loadouts (MP5 with holo, Glock, AKM with red dot/grip/compensator, M870). They patrol, react to sight and to
+gunshots within 40 m, take cover when reloading or badly hurt, flank, can't see through smoke, get flashed, and drop
+their modded weapon and loot.
+
+## Navigation
+Compass strip with bearing and extraction markers; **M** opens the map (cover, extractions with distance, squadmates,
+your facing) with the tactical panel (raid time, extraction status, carried value, health and injuries, squad).
+
 ## Controls
-WASD / left stick move, mouse / right stick look, Space / A jump, LMB / RT fire, R / B reload,
-E / X interact, Tab / Select inventory, 1/2/3 / Y weapons, Esc / Start toggles the menu (debug HUD).
-Inventory: left-click quick-moves (equip, store in rig/backpack, or move to the loot side);
-right-click a bag in a container to open it; "Take all" empties what you're looting.
+WASD move · mouse look · Space jump · Shift sprint · C crouch · LMB fire · RMB aim · R reload · V knife ·
+G throw grenade · B next grenade · E interact · 1/2/3 weapons · Tab inventory · M map · Esc menu.
+Gamepad: sticks, A jump, RT fire, LT aim, B reload, X interact, Y cycle weapon, RB knife, LB throw, d-pad left
+next grenade, L3 sprint, R3 crouch, Select inventory, Start menu.
+Inventory: click quick-moves, Alt+click moves one, drag places (R rotates), right-click opens a bag / uses a medical
+item / removes the last attachment.
 
 ## Dedicated server
 Build with the Dedicated Server target. The server starts automatically; optional `-port 7770`.

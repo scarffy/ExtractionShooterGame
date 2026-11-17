@@ -1,3 +1,4 @@
+using ExtractionShooter.Core.Inventory;
 using UnityEngine;
 
 namespace ExtractionShooter.Gameplay.Inventory
@@ -23,6 +24,10 @@ namespace ExtractionShooter.Gameplay.Inventory
         [Tooltip("Value per unit, used for scoring and trading.")]
         [SerializeField, Min(0)] private int _value;
 
+        [Header("Grid size (cells, unrotated)")]
+        [SerializeField, Min(1)] private int _width = 1;
+        [SerializeField, Min(1)] private int _height = 1;
+
         public string Id => _id;
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
         public string Description => _description;
@@ -31,6 +36,9 @@ namespace ExtractionShooter.Gameplay.Inventory
         /// <summary>Max quantity per slot. Items with per-instance state always return 1.</summary>
         public virtual int MaxStack => Mathf.Max(1, _maxStack);
         public int Value => _value;
+
+        /// <summary>Cells the item covers in a grid inventory, unrotated.</summary>
+        public ItemSize Size => new ItemSize(_width, _height);
 
         protected virtual void OnValidate()
         {

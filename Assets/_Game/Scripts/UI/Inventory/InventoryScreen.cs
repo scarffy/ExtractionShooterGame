@@ -2,6 +2,7 @@ using ExtractionShooter.Core.Input;
 using ExtractionShooter.Core.Inventory;
 using ExtractionShooter.Gameplay.Inventory;
 using ExtractionShooter.Gameplay.Player;
+using ExtractionShooter.Gameplay.Session;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -23,6 +24,9 @@ namespace ExtractionShooter.UI.Inventory
         [SerializeField] private ItemDatabase _itemDatabase;
         [SerializeField] private VisualTreeAsset _slotTemplate;
 
+        [Tooltip("Renders the character with its equipment, shared with the hideout. Optional.")]
+        [SerializeField] private Hideout.CharacterPreview _preview;
+
         private VisualElement _screen;
         private VisualElement _nestedPanel;
         private Label _rigTitle;
@@ -36,7 +40,18 @@ namespace ExtractionShooter.UI.Inventory
         private Button _takeAllButton;
         private Button _closeNestedButton;
 
+        private VisualElement _safeBoxPanel;
+        private Label _safeBoxTitle;
+        private Label _safeBoxName;
+        private Label _pocketsTitle;
+        private Label _characterName;
+        private Label _gearValue;
+        private VisualElement _previewImage;
+        private float _nextTitleRefresh;
+
         private SlotGridView _equipmentView;
+        private SlotGridView _pocketsView;
+        private SlotGridView _safeBoxView;
         private SlotGridView _rigView;
         private SlotGridView _backpackView;
         private SlotGridView _lootView;
@@ -73,8 +88,19 @@ namespace ExtractionShooter.UI.Inventory
 
             _drag = new InventoryDragController(_screen);
             _drag.Dropped += OnDropped;
+            _drag.CanFit = CanFit;
 
-            _equipmentView = CreateView(root, "equipment-grid", "equipment-panel", slot => EquipmentRules.DisplayName((EquipmentSlot)slot));
+            _equipmentView = CreateView(root, "equipment-grid", "equipment-column", slot => EquipmentRules.DisplayName((EquipmentSlot)slot));
+            LoadoutLayout.HostEquipment(_equipmentView, root, string.Empty);
+            _safeBoxName = root.Q<Label>("safebox-name");
+            _pocketsTitle = root.Q<Label>("pockets-title");
+            _characterName = root.Q<Label>("character-name");
+            _gearValue = root.Q<Label>("gear-value");
+            _previewImage = root.Q<VisualElement>("character-preview");
+            _pocketsView = CreateView(root, "pockets-grid", "pockets-panel");
+            _safeBoxView = CreateView(root, "safebox-grid", "safebox-panel");
+            _safeBoxPanel = root.Q<VisualElement>("safebox-panel");
+            _safeBoxTitle = root.Q<Label>("safebox-title");
             _rigView = CreateView(root, "rig-grid", "rig-panel");
             _backpackView = CreateView(root, "backpack-grid", "backpack-panel");
             _lootView = CreateView(root, "loot-grid", "loot-panel");
@@ -82,6 +108,8 @@ namespace ExtractionShooter.UI.Inventory
             _lootView.SlotSecondaryClicked += OnLootSecondaryClicked;
             _equipmentView.SlotSecondaryClicked += OnOwnSecondaryClicked;
             _rigView.SlotSecondaryClicked += OnOwnSecondaryClicked;
+            _pocketsView.SlotSecondaryClicked += OnOwnSecondaryClicked;
+            _safeBoxView.SlotSecondaryClicked += OnOwnSecondaryClicked;
             _backpackView.SlotSecondaryClicked += OnOwnSecondaryClicked;
 
             if (_takeAllButton != null) _takeAllButton.clicked += TakeAll;
@@ -104,6 +132,14 @@ namespace ExtractionShooter.UI.Inventory
 
         private void Update()
         {
+            _drag?.Tick();
+
+            if (_isOpen && Time.unscaledTime >= _nextTitleRefresh)
+            {
+                _nextTitleRefresh = Time.unscaledTime + 0.25f;
+                RefreshTitles();
+            }
+
             if (_player != null && _player.Input.ToggleInventoryPressed)
             {
                 if (_isOpen) Close();
@@ -190,8 +226,41 @@ namespace ExtractionShooter.UI.Inventory
             _equipmentView.Bind(equipment != null ? equipment.Container : null);
             _equipmentView.SetHighlightedSlot(equipment != null && equipment.ActiveWeaponSlot is EquipmentSlot active ? (int)active : -1);
 
+            _pocketsView.Bind(equipment != null ? equipment.Pockets : null);
+
+            // The safe box lives on the session; during a raid the server lets this player use it.
+            ItemContainer safeBox = equipment != null && PlayerSession.Local != null ? PlayerSession.Local.SafeBox : null;
+            _safeBoxView.Bind(safeBox);
+            SetVisible(_safeBoxPanel, safeBox != null);
+            if (safeBox != null) SetText(_safeBoxName, safeBox.DisplayName);
+
             BindStoragePanel(_rigView, _rigTitle, _rigEmpty, "Chest rig", equipment != null ? equipment.ChestRigStorage : null);
             BindStoragePanel(_backpackView, _backpackTitle, _backpackEmpty, "Backpack", equipment != null ? equipment.BackpackStorage : null);
+            RefreshTitles();
+
+            if (_preview != null && _isOpen)
+            {
+                _preview.Show(equipment != null ? equipment.Container : null);
+                if (_previewImage != null && _preview.Texture != null)
+                    _previewImage.style.backgroundImage = Background.FromRenderTexture(_preview.Texture);
+            }
+        }
+
+        /// <summary>Section fill counts, player name and the value of what is carried.</summary>
+        private void RefreshTitles()
+        {
+            PlayerEquipment equipment = _player != null ? _player.Equipment : null;
+            if (equipment == null) return;
+            SetText(_rigTitle, LoadoutLayout.SectionTitle(equipment.ChestRigStorage, "Chest rig"));
+            SetText(_backpackTitle, LoadoutLayout.SectionTitle(equipment.BackpackStorage, "Backpack"));
+            SetText(_pocketsTitle, LoadoutLayout.SectionTitle(equipment.Pockets, "Pockets"));
+            ItemContainer safeBox = PlayerSession.Local != null ? PlayerSession.Local.SafeBox : null;
+            SetText(_safeBoxTitle, LoadoutLayout.SectionTitle(safeBox, "Safe box"));
+            SetText(_characterName, PlayerSession.Local != null ? PlayerSession.Local.PlayerName : string.Empty);
+            if (_itemDatabase == null) return;
+            long value = GearValue.Of(equipment.Container, _itemDatabase) + GearValue.Of(equipment.ChestRigStorage, _itemDatabase) +
+                         GearValue.Of(equipment.BackpackStorage, _itemDatabase) + GearValue.Of(equipment.Pockets, _itemDatabase);
+            SetText(_gearValue, $"Gear value  {value:N0} cr");
         }
 
         private void OnOpenContainersChanged()
@@ -221,7 +290,7 @@ namespace ExtractionShooter.UI.Inventory
         private static void BindStoragePanel(SlotGridView view, Label title, Label emptyLabel, string fallbackTitle, ItemContainer storage)
         {
             view.Bind(storage);
-            SetText(title, storage != null ? $"{storage.DisplayName}  ·  {storage.SlotCount}" : fallbackTitle);
+            SetText(title, LoadoutLayout.SectionTitle(storage, fallbackTitle));
             SetVisible(emptyLabel, storage == null);
         }
 
@@ -236,10 +305,10 @@ namespace ExtractionShooter.UI.Inventory
             _player.Inventory.RequestQuickMove(source, slot, moveOne ? 1 : 0);
         }
 
-        private void OnDropped(ItemContainer source, int sourceSlot, ItemContainer target, int targetSlot)
+        private void OnDropped(ItemContainer source, int sourceSlot, ItemContainer target, int targetSlot, bool rotated)
         {
             if (_player != null && _player.Inventory != null)
-                _player.Inventory.RequestTransfer(source, sourceSlot, target, targetSlot);
+                _player.Inventory.RequestTransfer(source, sourceSlot, target, targetSlot, 0, rotated);
         }
 
         private void OnLootSecondaryClicked(ItemContainer source, int slot)
@@ -248,12 +317,26 @@ namespace ExtractionShooter.UI.Inventory
                 _player.Inventory.RequestOpenNested(source, slot);
         }
 
-        /// <summary>Right click on the player's own item: use it if it is a consumable.</summary>
+        /// <summary>Right click on the player's own item: use a consumable, or take the last attachment off a weapon.</summary>
         private void OnOwnSecondaryClicked(ItemContainer source, int slot)
         {
             if (_player == null || _player.Inventory == null || _itemDatabase == null) return;
-            if (_itemDatabase.TryGet(source.GetSlot(slot).ItemId, out ItemDefinition item) && item is MedicalDefinition)
+            ItemStack stack = source.GetSlot(slot);
+            if (_itemDatabase.TryGet(stack.ItemId, out ItemDefinition item) && item is MedicalDefinition)
                 _player.Inventory.RequestUse(source, slot);
+            else if (TryGetLastAttachment(stack, out AttachmentSlot fitted))
+                _player.Inventory.RequestDetach(source, slot, fitted);
+        }
+
+        private bool CanFit(ItemStack held, ItemStack under) => _itemDatabase != null && _itemDatabase.Fits(held.ItemId, under.ItemId);
+
+        /// <summary>The last fitted attachment slot on a weapon, if any.</summary>
+        public static bool TryGetLastAttachment(in ItemStack stack, out AttachmentSlot slot)
+        {
+            slot = default;
+            bool any = false;
+            foreach (var fitted in WeaponMods.All(stack.Attachments)) { slot = fitted.Key; any = true; }
+            return any;
         }
 
         private void CloseNested()
