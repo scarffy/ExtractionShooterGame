@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4007b59013e47d7bfd651cdea691987, type: 3}
+  m_Name: Ammo_556_M855
+  m_EditorClassIdentifier:
+  _id: ammo_556_m855
+  _displayName: 5.56x45 M855
+  _description: Steel penetrator NATO round.
+  _icon: {fileID: 0}
+  _category: 1
+  _maxStack: 60
+  _value: 6
+  _caliber: 4
+  _damage: 34
+  _penetration: 36
+  _armorDamagePercent: 50
+  _projectiles: 1
+  _extraSpread: 0

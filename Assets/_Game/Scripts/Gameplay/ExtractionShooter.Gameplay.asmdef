@@ -1,0 +1,14 @@
+{
+    "name": "ExtractionShooter.Gameplay",
+    "rootNamespace": "ExtractionShooter.Gameplay",
+    "references": ["ExtractionShooter.Core", "FishNet.Runtime", "GameKit.Dependencies", "Unity.InputSystem"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

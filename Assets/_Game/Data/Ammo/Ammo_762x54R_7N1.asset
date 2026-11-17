@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4007b59013e47d7bfd651cdea691987, type: 3}
+  m_Name: Ammo_762x54R_7N1
+  m_EditorClassIdentifier:
+  _id: ammo_762x54r_7n1
+  _displayName: 7.62x54R 7N1
+  _description: Sniper round.
+  _icon: {fileID: 0}
+  _category: 1
+  _maxStack: 40
+  _value: 14
+  _caliber: 8
+  _damage: 55
+  _penetration: 46
+  _armorDamagePercent: 70
+  _projectiles: 1
+  _extraSpread: 0

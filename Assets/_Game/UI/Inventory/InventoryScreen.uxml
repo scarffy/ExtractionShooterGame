@@ -1,0 +1,117 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Game/UI/Inventory/InventoryScreen.uss?fileID=7433441132597879392&amp;guid=49794000554d4855b52d6d86485236b3&amp;type=3#InventoryScreen" />
+    <engine:VisualElement name="hud-layer" class="hud-layer" picking-mode="Ignore">
+        <engine:Label name="raid-hud" class="raid-hud hidden" picking-mode="Ignore" />
+        <engine:Label name="interaction-prompt" class="interaction-prompt hidden" picking-mode="Ignore" />
+        <engine:VisualElement name="equipment-hud" class="equipment-hud hidden" picking-mode="Ignore">
+            <engine:Label name="ammo-hud" class="equipment-hud__line equipment-hud__line--ammo" picking-mode="Ignore" />
+            <engine:Label name="weapon-hud" class="equipment-hud__line" picking-mode="Ignore" />
+            <engine:Label name="armor-hud" class="equipment-hud__line equipment-hud__line--dim" picking-mode="Ignore" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+    <engine:VisualElement name="inventory-screen" class="inventory-screen hidden">
+        <engine:VisualElement name="inventory-columns" class="inventory-columns">
+            <engine:VisualElement name="gear-column" class="inventory-column inventory-column--gear">
+                <engine:VisualElement name="equipment-panel" class="inventory-panel">
+                    <engine:Label name="equipment-title" class="panel-title" text="Equipment" />
+                    <engine:VisualElement name="equipment-grid" class="slot-grid" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+            <engine:VisualElement name="storage-column" class="inventory-column">
+                <engine:VisualElement name="rig-panel" class="inventory-panel">
+                    <engine:Label name="rig-title" class="panel-title" text="Chest rig" />
+                    <engine:Label name="rig-empty" class="panel-empty" text="No chest rig equipped" />
+                    <engine:VisualElement name="rig-grid" class="slot-grid" />
+                </engine:VisualElement>
+                <engine:VisualElement name="backpack-panel" class="inventory-panel">
+                    <engine:Label name="backpack-title" class="panel-title" text="Backpack" />
+                    <engine:Label name="backpack-empty" class="panel-empty" text="No backpack equipped" />
+                    <engine:VisualElement name="backpack-grid" class="slot-grid" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+            <engine:VisualElement name="loot-column" class="inventory-column">
+                <engine:VisualElement name="loot-panel" class="inventory-panel">
+                    <engine:Label name="loot-title" class="panel-title" text="Loot" />
+                    <engine:Label name="loot-empty" class="panel-empty" text="Search a crate or body to loot it" />
+                    <engine:VisualElement name="loot-grid" class="slot-grid" />
+                    <engine:Button name="take-all-button" class="panel-button hidden" text="Take all" />
+                </engine:VisualElement>
+                <engine:VisualElement name="nested-panel" class="inventory-panel hidden">
+                    <engine:VisualElement class="panel-header">
+                        <engine:Label name="nested-title" class="panel-title" text="Bag" />
+                        <engine:Button name="close-nested-button" class="panel-button panel-button--small" text="Close" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="nested-grid" class="slot-grid" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+        </engine:VisualElement>
+        <engine:Label name="item-details" class="item-details" picking-mode="Ignore" />
+        <engine:Label name="inventory-hint" class="inventory-hint" text="Click: move stack   ·   Alt+click: move one   ·   Drag: place in a slot   ·   Right-click: open bag / use medical   ·   Tab / Esc: close" picking-mode="Ignore" />
+    </engine:VisualElement>
+    <engine:VisualElement name="hideout-screen" class="inventory-screen hideout-screen hidden">
+        <engine:VisualElement name="sign-in-panel" class="inventory-panel sign-in-panel">
+            <engine:Label class="panel-title" text="Sign in" />
+            <engine:TextField name="name-field" label="Player name" max-length="16" class="sign-in-field" />
+            <engine:Button name="sign-in-button" class="panel-button" text="Enter hideout" />
+            <engine:Label name="sign-in-error" class="sign-in-error" />
+        </engine:VisualElement>
+        <engine:VisualElement name="hideout-main" class="hideout-main hidden">
+            <engine:VisualElement class="hideout-header">
+                <engine:VisualElement class="hideout-header__left">
+                    <engine:Label name="hideout-title" class="hideout-title" text="Hideout" />
+                    <engine:Button name="tab-stash" class="hideout-tab hideout-tab--active" text="Stash" />
+                    <engine:Button name="tab-trader" class="hideout-tab" text="Trader" />
+                </engine:VisualElement>
+                <engine:VisualElement class="hideout-header__right">
+                    <engine:Label name="trade-message" class="trade-message" picking-mode="Ignore" />
+                    <engine:Label name="hideout-credits" class="hideout-credits" picking-mode="Ignore" />
+                    <engine:Button name="deploy-button" class="panel-button deploy-button" text="Deploy" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+            <engine:VisualElement class="inventory-columns">
+                <engine:VisualElement name="hideout-gear-column" class="inventory-column inventory-column--gear">
+                    <engine:VisualElement name="loadout-panel" class="inventory-panel">
+                        <engine:Label class="panel-title" text="Loadout" />
+                        <engine:VisualElement name="loadout-grid" class="slot-grid" />
+                    </engine:VisualElement>
+                </engine:VisualElement>
+                <engine:VisualElement name="hideout-middle-column" class="inventory-column">
+                    <engine:VisualElement name="hideout-rig-panel" class="inventory-panel">
+                        <engine:Label name="hideout-rig-title" class="panel-title" text="Chest rig" />
+                        <engine:Label name="hideout-rig-empty" class="panel-empty" text="No chest rig equipped" />
+                        <engine:VisualElement name="hideout-rig-grid" class="slot-grid" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="hideout-backpack-panel" class="inventory-panel">
+                        <engine:Label name="hideout-backpack-title" class="panel-title" text="Backpack" />
+                        <engine:Label name="hideout-backpack-empty" class="panel-empty" text="No backpack equipped" />
+                        <engine:VisualElement name="hideout-backpack-grid" class="slot-grid" />
+                    </engine:VisualElement>
+                </engine:VisualElement>
+                <engine:VisualElement name="trader-column" class="inventory-column inventory-column--trader hidden">
+                    <engine:VisualElement name="trader-panel" class="inventory-panel">
+                        <engine:VisualElement class="panel-header">
+                            <engine:Label name="trader-title" class="panel-title" text="Trader" />
+                            <engine:VisualElement name="trader-filters" class="trader-filters" />
+                        </engine:VisualElement>
+                        <engine:VisualElement name="trader-grid" class="slot-grid" />
+                    </engine:VisualElement>
+                </engine:VisualElement>
+                <engine:VisualElement class="inventory-column inventory-column--stash">
+                    <engine:VisualElement name="stash-panel" class="inventory-panel">
+                        <engine:Label class="panel-title" text="Stash" />
+                        <engine:VisualElement name="stash-grid" class="slot-grid" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="hideout-bag-panel" class="inventory-panel hidden">
+                        <engine:VisualElement class="panel-header">
+                            <engine:Label name="hideout-bag-title" class="panel-title" text="Bag" />
+                            <engine:Button name="close-bag-button" class="panel-button panel-button--small" text="Close" />
+                        </engine:VisualElement>
+                        <engine:VisualElement name="hideout-bag-grid" class="slot-grid" />
+                    </engine:VisualElement>
+                </engine:VisualElement>
+            </engine:VisualElement>
+            <engine:Label name="hideout-details" class="item-details" picking-mode="Ignore" />
+            <engine:Label name="hideout-hint" class="inventory-hint" text="Click: stash / equip   ·   Alt+click: move one   ·   Drag: place in a slot   ·   Right-click a bag in the stash: open   ·   What you deploy with is at risk" picking-mode="Ignore" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

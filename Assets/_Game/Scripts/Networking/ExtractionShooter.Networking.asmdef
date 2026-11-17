@@ -1,0 +1,20 @@
+{
+    "name": "ExtractionShooter.Networking",
+    "rootNamespace": "ExtractionShooter.Networking",
+    "references": [
+        "ExtractionShooter.Core",
+        "ExtractionShooter.Gameplay",
+        "FishNet.Runtime",
+        "GameKit.Dependencies",
+        "Unity.AI.Navigation"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

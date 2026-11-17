@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4007b59013e47d7bfd651cdea691987, type: 3}
+  m_Name: Ammo_545_BS
+  m_EditorClassIdentifier:
+  _id: ammo_545_bs
+  _displayName: 5.45x39 BS
+  _description: Tungsten-core armor-piercing.
+  _icon: {fileID: 0}
+  _category: 1
+  _maxStack: 60
+  _value: 14
+  _caliber: 5
+  _damage: 30
+  _penetration: 52
+  _armorDamagePercent: 62
+  _projectiles: 1
+  _extraSpread: 0

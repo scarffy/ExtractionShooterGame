@@ -1,0 +1,11 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" editor-extension-mode="False">
+    <engine:VisualElement name="slot" class="slot slot--empty">
+        <engine:VisualElement name="icon" class="slot__icon" picking-mode="Ignore" />
+        <engine:Label name="caption" class="slot__caption" picking-mode="Ignore" />
+        <engine:Label name="name" class="slot__name" picking-mode="Ignore" />
+        <engine:VisualElement class="slot__footer" picking-mode="Ignore">
+            <engine:Label name="detail" class="slot__detail" picking-mode="Ignore" />
+            <engine:Label name="quantity" class="slot__quantity" picking-mode="Ignore" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

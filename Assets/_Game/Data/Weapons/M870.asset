@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 708a0daeb1e6a4fadb3db02549126320, type: 3}
+  m_Name: M870
+  m_EditorClassIdentifier:
+  _id: m870
+  _displayName: M870
+  _description: Pump-action 12 gauge shotgun.
+  _icon: {fileID: 0}
+  _category: 4
+  _maxStack: 1
+  _value: 700
+  _weaponClass: 0
+  _caliber: 9
+  _fireMode: 0
+  _magazineSize: 6
+  _reloadSeconds: 3.5
+  _roundsPerMinute: 70
+  _range: 60
+  _spread: 0.5
+  _hitMask: 
+    serializedVersion: 2
+    m_Bits: 4294967291
+  _fireRateTolerance: 0.03
+  _maxOriginError: 1.5

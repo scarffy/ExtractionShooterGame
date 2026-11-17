@@ -1,0 +1,432 @@
+/* ---------- Layers ---------- */
+
+.hud-layer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 180px;
+}
+
+.inventory-screen {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(8, 10, 12, 0.78);
+}
+
+.hidden {
+    display: none;
+}
+
+/* ---------- HUD ---------- */
+
+.interaction-prompt {
+    padding: 6px 14px;
+    border-radius: 4px;
+    background-color: rgba(10, 12, 14, 0.75);
+    color: rgb(235, 235, 230);
+    font-size: 20px;
+    -unity-font-style: bold;
+}
+
+.equipment-hud {
+    position: absolute;
+    right: 32px;
+    bottom: 28px;
+    padding: 8px 14px;
+    border-radius: 4px;
+    background-color: rgba(10, 12, 14, 0.6);
+    align-items: flex-end;
+}
+
+.equipment-hud__line {
+    color: rgb(235, 235, 225);
+    font-size: 18px;
+    -unity-font-style: bold;
+}
+
+.equipment-hud__line--ammo {
+    margin-bottom: 4px;
+    font-size: 24px;
+    -unity-text-align: middle-right;
+}
+
+.equipment-hud__line--dim {
+    margin-top: 2px;
+    color: rgba(235, 235, 225, 0.7);
+    font-size: 15px;
+    -unity-font-style: normal;
+}
+
+/* ---------- Raid HUD ---------- */
+
+.raid-hud {
+    position: absolute;
+    top: 18px;
+    padding: 6px 16px;
+    border-radius: 4px;
+    background-color: rgba(10, 12, 14, 0.6);
+    color: rgb(235, 235, 225);
+    font-size: 22px;
+    -unity-font-style: bold;
+}
+
+.raid-hud--warning {
+    color: rgb(240, 120, 90);
+}
+
+/* ---------- Hideout ---------- */
+
+.hideout-screen {
+    background-color: rgb(16, 19, 22);
+}
+
+.sign-in-panel {
+    width: 420px;
+}
+
+.sign-in-field {
+    margin: 6px 0 4px 0;
+}
+
+.sign-in-error {
+    min-height: 20px;
+    margin-top: 8px;
+    color: rgb(240, 120, 90);
+    font-size: 14px;
+}
+
+.hideout-main {
+    align-items: center;
+}
+
+.hideout-header {
+    width: 1720px;
+    margin-bottom: 12px;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hideout-title {
+    color: rgb(240, 236, 220);
+    font-size: 26px;
+    -unity-font-style: bold;
+}
+
+.hideout-header__left,
+.hideout-header__right {
+    flex-direction: row;
+    align-items: center;
+}
+
+.hideout-tab {
+    height: 34px;
+    margin: 0 0 0 16px;
+    padding: 0 18px;
+    border-radius: 4px;
+    border-width: 0;
+    background-color: rgb(40, 46, 52);
+    color: rgba(230, 225, 210, 0.7);
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.hideout-tab:hover {
+    background-color: rgb(56, 64, 72);
+}
+
+.hideout-tab--active {
+    background-color: rgb(230, 190, 90);
+    color: rgb(22, 26, 30);
+}
+
+.hideout-tab--active:hover {
+    background-color: rgb(240, 204, 110);
+}
+
+.hideout-credits {
+    margin: 0 18px;
+    color: rgb(230, 190, 90);
+    font-size: 22px;
+    -unity-font-style: bold;
+}
+
+.trade-message {
+    max-width: 520px;
+    color: rgb(150, 200, 120);
+    font-size: 14px;
+    -unity-text-align: middle-right;
+}
+
+.trade-message--failed {
+    color: rgb(240, 120, 90);
+}
+
+.deploy-button {
+    width: 220px;
+    height: 44px;
+    margin: 0;
+    font-size: 18px;
+}
+
+/* ---------- Columns & panels ---------- */
+
+.inventory-columns {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.inventory-column {
+    width: 540px;
+    margin: 0 10px;
+}
+
+/* Equipment holds 7 slots: 4 per row. */
+.inventory-column--gear {
+    width: 384px;
+}
+
+/* Trader: takes the place of the loadout and bag columns (384 + 540 + their margins). */
+.inventory-column--trader {
+    width: 944px;
+}
+
+.trader-filters {
+    flex-direction: row;
+    margin-bottom: 8px;
+}
+
+.trader-filter {
+    height: 26px;
+    margin: 0 0 0 6px;
+    padding: 0 12px;
+    border-radius: 4px;
+    border-width: 0;
+    background-color: rgb(40, 46, 52);
+    color: rgba(230, 225, 210, 0.75);
+    font-size: 13px;
+}
+
+.trader-filter:hover {
+    background-color: rgb(56, 64, 72);
+}
+
+.trader-filter--active {
+    background-color: rgb(70, 86, 52);
+    color: rgb(240, 240, 235);
+}
+
+/* Stash: 10 slots per row. Declared after .inventory-column so it wins. */
+.inventory-column--stash {
+    width: 888px;
+}
+
+.inventory-panel {
+    margin-bottom: 14px;
+    padding: 12px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(22, 26, 30, 0.95);
+}
+
+.panel-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-title {
+    margin-bottom: 8px;
+    color: rgb(230, 225, 210);
+    font-size: 20px;
+    -unity-font-style: bold;
+}
+
+.panel-empty {
+    padding: 10px 0 6px 0;
+    color: rgba(230, 225, 210, 0.45);
+    font-size: 14px;
+}
+
+.panel-button {
+    height: 34px;
+    margin: 10px 0 0 0;
+    border-radius: 4px;
+    border-width: 0;
+    background-color: rgb(70, 86, 52);
+    color: rgb(240, 240, 235);
+    font-size: 15px;
+    -unity-font-style: bold;
+}
+
+.panel-button:hover {
+    background-color: rgb(88, 108, 64);
+}
+
+.panel-button:active {
+    background-color: rgb(58, 72, 44);
+}
+
+.panel-button--small {
+    height: 26px;
+    margin: 0 0 8px 0;
+    padding: 0 12px;
+    background-color: rgb(70, 70, 76);
+    font-size: 13px;
+}
+
+/* ---------- Slots ---------- */
+
+.slot-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.slot {
+    width: 78px;
+    height: 78px;
+    margin: 3px;
+    padding: 4px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.10);
+    border-left-width: 3px;
+    border-left-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(40, 46, 52, 0.95);
+    justify-content: space-between;
+}
+
+.slot:hover {
+    background-color: rgba(62, 70, 78, 0.95);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.slot--empty {
+    border-left-color: rgba(255, 255, 255, 0.06);
+    background-color: rgba(30, 34, 38, 0.8);
+}
+
+.slot--empty:hover {
+    background-color: rgba(30, 34, 38, 0.8);
+    border-color: rgba(255, 255, 255, 0.10);
+}
+
+.slot--active {
+    border-color: rgb(230, 190, 90);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+}
+
+.slot--dragging {
+    opacity: 0.35;
+}
+
+.slot--broken {
+    background-color: rgba(70, 30, 30, 0.95);
+}
+
+.slot__icon {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: 12px;
+    bottom: 22px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.slot__caption {
+    display: none;
+    color: rgba(230, 230, 225, 0.35);
+    font-size: 10px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    flex-grow: 1;
+}
+
+.slot--empty .slot__caption {
+    display: flex;
+}
+
+.slot__name {
+    color: rgb(230, 230, 225);
+    font-size: 11px;
+    white-space: normal;
+    -unity-font-style: bold;
+    overflow: hidden;
+    max-height: 30px;
+}
+
+.slot__footer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.slot__detail {
+    color: rgba(200, 200, 190, 0.85);
+    font-size: 11px;
+}
+
+.slot__quantity {
+    color: rgb(210, 210, 200);
+    font-size: 13px;
+    -unity-font-style: bold;
+}
+
+/* Category colour stripe */
+.slot--ammo     { border-left-color: rgb(196, 160, 72); }
+.slot--medical  { border-left-color: rgb(196, 72, 72); }
+.slot--valuable { border-left-color: rgb(120, 170, 220); }
+.slot--weapon   { border-left-color: rgb(170, 170, 170); }
+.slot--armor    { border-left-color: rgb(110, 150, 100); }
+.slot--misc     { border-left-color: rgb(150, 140, 120); }
+
+/* Trader offers: price in the footer, dimmed when unaffordable. */
+.slot--offer .slot__detail {
+    color: rgb(230, 190, 90);
+    -unity-font-style: bold;
+}
+
+.slot--unaffordable {
+    opacity: 0.4;
+}
+
+/* ---------- Drag ghost ---------- */
+
+.drag-ghost {
+    position: absolute;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgb(230, 190, 90);
+    background-color: rgba(22, 26, 30, 0.95);
+    color: rgb(240, 236, 220);
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+/* ---------- Footer ---------- */
+
+.item-details {
+    min-height: 26px;
+    margin-top: 6px;
+    color: rgb(225, 220, 205);
+    font-size: 16px;
+}
+
+.inventory-hint {
+    margin-top: 4px;
+    color: rgba(225, 220, 205, 0.55);
+    font-size: 14px;
+}

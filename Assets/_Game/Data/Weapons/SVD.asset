@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 708a0daeb1e6a4fadb3db02549126320, type: 3}
+  m_Name: SVD
+  m_EditorClassIdentifier:
+  _id: svd
+  _displayName: SVD
+  _description: Semi-auto 7.62x54R marksman rifle.
+  _icon: {fileID: 0}
+  _category: 4
+  _maxStack: 1
+  _value: 2800
+  _weaponClass: 0
+  _caliber: 8
+  _fireMode: 0
+  _magazineSize: 10
+  _reloadSeconds: 3.0
+  _roundsPerMinute: 250
+  _range: 500
+  _spread: 0.2
+  _hitMask: 
+    serializedVersion: 2
+    m_Bits: 4294967291
+  _fireRateTolerance: 0.03
+  _maxOriginError: 1.5
