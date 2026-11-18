@@ -50,6 +50,9 @@ namespace ExtractionShooter.Gameplay.Inventory
         /// <summary>Owner side. Raised when the looted container or the opened bag changes.</summary>
         public event Action OpenContainersChanged;
 
+        /// <summary>Owner side. A short message about a move that could not be made (no room, bag not empty).</summary>
+        public event Action<string> Notice;
+
         public PlayerEquipment Equipment => _equipment;
 
         public ItemContainer OpenContainer => Resolve(_openContainer.Value);
@@ -191,7 +194,9 @@ namespace ExtractionShooter.Gameplay.Inventory
             if (targetSlot >= 0 && WeaponModding.TryFit(from, sourceSlot, to, targetSlot, _equipment.Container.ItemDatabase) !=
                 ModResult.NotApplicable) return;
 
-            from.TransferTo(to, sourceSlot, targetSlot, quantity, targetSlot >= 0 ? rotated : (bool?)null);
+            ItemStack moving = from.IsValidSlot(sourceSlot) ? from[sourceSlot] : ItemStack.Empty;
+            InventoryResult result = from.TransferTo(to, sourceSlot, targetSlot, quantity, targetSlot >= 0 ? rotated : (bool?)null);
+            if (result == InventoryResult.NoSpace && !moving.IsEmpty) ServerNotice(NoRoomText(moving, dropped: true));
         }
 
         /// <summary>Takes an attachment off a weapon in the player's own equipment or bags.</summary>
@@ -223,28 +228,49 @@ namespace ExtractionShooter.Gameplay.Inventory
 
             SlotInventory equipment = _equipment.Container.ServerInventory;
             SlotInventory loot = LootTarget();
+            ItemStack moving = from[sourceSlot];
 
             switch (role)
             {
                 case ContainerRole.Equipment:
                     // Unequip: to the loot side if looting, otherwise into the rig, then the backpack.
-                    if (TryMove(from, sourceSlot, loot, quantity)) return;
-                    TryMoveToStorage(from, sourceSlot, quantity);
+                    if (TryMove(from, sourceSlot, loot, quantity) || TryMoveToStorage(from, sourceSlot, quantity)) return;
+                    ServerNotice(NoRoomText(moving, dropped: false));
                     return;
 
                 case ContainerRole.Storage:
                     // From a bag: to the loot side if looting, otherwise try to equip it.
                     if (TryMove(from, sourceSlot, loot, quantity)) return;
-                    TryMove(from, sourceSlot, equipment, quantity);
+                    if (!TryMove(from, sourceSlot, equipment, quantity) && loot != null) ServerNotice(NoRoomText(moving, dropped: true));
                     return;
 
                 case ContainerRole.Loot:
                     // Taking loot: equip if a matching slot is free, otherwise into the rig, then the backpack.
-                    if (TryMove(from, sourceSlot, equipment, quantity)) return;
-                    TryMoveToStorage(from, sourceSlot, quantity);
+                    if (TryMove(from, sourceSlot, equipment, quantity) || TryMoveToStorage(from, sourceSlot, quantity)) return;
+                    ServerNotice(NoRoomText(moving, dropped: false));
                     return;
             }
         }
+
+        /// <summary>Why a move failed, for the owner: a bag that still holds items, else no room.</summary>
+        private string NoRoomText(in ItemStack stack, bool dropped)
+        {
+            ItemDatabase database = _equipment.Container != null ? _equipment.Container.ItemDatabase : null;
+            string name = database != null && database.TryGet(stack.ItemId, out ItemDefinition item) ? item.DisplayName : "item";
+
+            if (ItemContainer.TryResolveContents(NetworkManager, stack, out ItemContainer storage) &&
+                storage.ServerInventory != null && !storage.ServerInventory.IsEmpty)
+                return $"Empty the {name} before packing it.";
+            return dropped ? $"The {name} doesn't fit there." : $"No room for the {name} in your rig, pockets or backpack.";
+        }
+
+        private void ServerNotice(string message)
+        {
+            if (Owner != null && Owner.IsValid) TargetNotice(Owner, message);
+        }
+
+        [TargetRpc]
+        private void TargetNotice(NetworkConnection connection, string message) => Notice?.Invoke(message);
 
         [ServerRpc]
         private void ServerUse(ItemContainer source, int sourceSlot)

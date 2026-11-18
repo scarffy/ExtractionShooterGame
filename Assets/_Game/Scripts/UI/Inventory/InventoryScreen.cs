@@ -37,6 +37,8 @@ namespace ExtractionShooter.UI.Inventory
         private Label _lootEmpty;
         private Label _nestedTitle;
         private Label _details;
+        private Label _notice;
+        private float _noticeUntil;
         private Button _takeAllButton;
         private Button _closeNestedButton;
 
@@ -84,6 +86,7 @@ namespace ExtractionShooter.UI.Inventory
             _backpackEmpty = root.Q<Label>("backpack-empty");
             _lootEmpty = root.Q<Label>("loot-empty");
             _details = root.Q<Label>("item-details");
+            _notice = root.Q<Label>("inventory-notice");
             _takeAllButton = root.Q<Button>("take-all-button");
             _closeNestedButton = root.Q<Button>("close-nested-button");
 
@@ -136,6 +139,8 @@ namespace ExtractionShooter.UI.Inventory
         {
             _drag?.Tick();
 
+            if (_noticeUntil > 0f && Time.unscaledTime >= _noticeUntil) ShowNotice(string.Empty, 0f);
+
             if (_isOpen && Time.unscaledTime >= _nextTitleRefresh)
             {
                 _nextTitleRefresh = Time.unscaledTime + 0.25f;
@@ -168,6 +173,7 @@ namespace ExtractionShooter.UI.Inventory
             _isOpen = false; // set first: locking the cursor below raises LockChanged
             _drag?.Cancel();
             SetVisible(_screen, false);
+            ShowNotice(string.Empty, 0f);
 
             if (_player != null && _player.Inventory != null && _player.Inventory.OpenContainer != null)
                 _player.Inventory.RequestClose();
@@ -196,7 +202,11 @@ namespace ExtractionShooter.UI.Inventory
         {
             if (_player != null)
             {
-                if (_player.Inventory != null) _player.Inventory.OpenContainersChanged -= OnOpenContainersChanged;
+                if (_player.Inventory != null)
+                {
+                    _player.Inventory.OpenContainersChanged -= OnOpenContainersChanged;
+                    _player.Inventory.Notice -= OnNotice;
+                }
                 if (_player.Equipment != null) _player.Equipment.Changed -= OnEquipmentChanged;
                 _player.Health.Changed -= OnHealthChanged;
             }
@@ -206,7 +216,11 @@ namespace ExtractionShooter.UI.Inventory
 
             if (_player != null)
             {
-                if (_player.Inventory != null) _player.Inventory.OpenContainersChanged += OnOpenContainersChanged;
+                if (_player.Inventory != null)
+                {
+                    _player.Inventory.OpenContainersChanged += OnOpenContainersChanged;
+                    _player.Inventory.Notice += OnNotice;
+                }
                 if (_player.Equipment != null) _player.Equipment.Changed += OnEquipmentChanged;
                 _player.Health.Changed += OnHealthChanged;
             }
@@ -366,6 +380,16 @@ namespace ExtractionShooter.UI.Inventory
                 if (!source.GetSlot(i).IsEmpty)
                     _player.Inventory.RequestQuickMove(source, i);
             }
+        }
+
+        private const float NoticeSeconds = 3f;
+
+        private void OnNotice(string message) => ShowNotice(message, NoticeSeconds);
+
+        private void ShowNotice(string message, float seconds)
+        {
+            _noticeUntil = seconds > 0f ? Time.unscaledTime + seconds : 0f;
+            if (_notice != null) _notice.text = message ?? string.Empty;
         }
 
         private void ShowDetails(ItemStack stack)

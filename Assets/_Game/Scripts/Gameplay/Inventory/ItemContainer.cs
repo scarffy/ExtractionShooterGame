@@ -310,7 +310,7 @@ namespace ExtractionShooter.Gameplay.Inventory
             _capacity = capacity;
             _gridWidth = gridWidth;
             _serverSlots = moved;
-            _serverInventory = new SlotInventory(this, _itemDatabase, SlotFilters.Create(_slotRules, _itemDatabase), _gridWidth);
+            _serverInventory = new SlotInventory(this, _itemDatabase, SlotFilters.Create(_slotRules, _itemDatabase, this), _gridWidth);
             _replicatedGridWidth.Value = _gridWidth;
 
             // The slot count changed: everyone who can see it gets a fresh full copy.
@@ -346,6 +346,16 @@ namespace ExtractionShooter.Gameplay.Inventory
             return storage != null;
         }
 
+        /// <summary>
+        /// Server: whether this bag may lie in here: its storage must be found, be empty, and not be this container.
+        /// </summary>
+        internal bool ServerCanHoldBag(in ItemStack bag)
+        {
+            if (!TryResolveContents(NetworkManager, bag, out ItemContainer storage) || storage == this) return false;
+            SlotInventory contents = storage.ServerInventory;
+            return contents != null && contents.IsEmpty;
+        }
+
         private void EnsureServerSlots()
         {
             if (_serverInventory != null) return;
@@ -358,7 +368,7 @@ namespace ExtractionShooter.Gameplay.Inventory
 
             _serverSlots = new ItemStack[_capacity];
             _serverInventory = new SlotInventory(
-                this, _itemDatabase, SlotFilters.Create(_slotRules, _itemDatabase), _gridWidth);
+                this, _itemDatabase, SlotFilters.Create(_slotRules, _itemDatabase, this), _gridWidth);
         }
 
         // ---- ISlotStore: the server's slots. Every write is noticed here. ----

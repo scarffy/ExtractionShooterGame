@@ -21,7 +21,7 @@ MonoBehaviour:
   _value: 400
   _containerKind: 0
   _gridWidth: 5
-  _gridHeight: 2
+  _gridHeight: 3
   _storagePrefab: {fileID: 89061260635832939, guid: ffa87cea709d4208909e7ac53095888d, type: 3}
   _width: 3
   _height: 3

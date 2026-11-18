@@ -11,21 +11,25 @@ namespace ExtractionShooter.Gameplay.Inventory
         /// <summary>Player equipment: one typed slot per <see cref="EquipmentSlot"/>.</summary>
         Equipment = 1,
 
-        /// <summary>Bag storage and the safe box: anything except other bags.</summary>
+        /// <summary>Bag storage: anything except bags with items in them (an empty bag can be carried in another).</summary>
         Storage = 2,
 
         /// <summary>Pockets: small (1x1) items only, no bags.</summary>
         Pockets = 3,
+
+        /// <summary>The safe box (kept on death): anything except bags, even empty ones.</summary>
+        SafeBox = 4,
     }
 
     internal static class SlotFilters
     {
-        public static ISlotFilter Create(ContainerSlotRules rules, ItemDatabase database)
+        public static ISlotFilter Create(ContainerSlotRules rules, ItemDatabase database, ItemContainer owner = null)
         {
             switch (rules)
             {
                 case ContainerSlotRules.Equipment: return new EquipmentSlotFilter(database);
-                case ContainerSlotRules.Storage: return StorageSlotFilter.Instance;
+                case ContainerSlotRules.Storage: return new StorageSlotFilter(owner);
+                case ContainerSlotRules.SafeBox: return NoBagsSlotFilter.Instance;
                 case ContainerSlotRules.Pockets: return new PocketSlotFilter(database);
                 default: return AcceptAllSlotFilter.Instance;
             }
@@ -54,10 +58,26 @@ namespace ExtractionShooter.Gameplay.Inventory
                 !stack.HasContents && _database != null && _database.GetSize(stack.ItemId).Area == 1;
         }
 
-        /// <summary>No bags inside bags: keeps storage one level deep and makes cycles impossible.</summary>
+        /// <summary>
+        /// Bag storage: a bag may come in only while it is empty and is not this storage's own bag (checked on the
+        /// server; a client-side layout has no owner and refuses bags). Nothing can be put into a bag lying in
+        /// another bag (only bags in the stash or the world can be opened), so a carried bag stays empty and bags
+        /// can never contain themselves.
+        /// </summary>
         private sealed class StorageSlotFilter : ISlotFilter
         {
-            public static readonly StorageSlotFilter Instance = new StorageSlotFilter();
+            private readonly ItemContainer _owner;
+
+            public StorageSlotFilter(ItemContainer owner) => _owner = owner;
+
+            public bool CanAccept(int slot, in ItemStack stack) =>
+                !stack.HasContents || _owner != null && _owner.ServerCanHoldBag(stack);
+        }
+
+        /// <summary>No bags at all, not even empty ones.</summary>
+        private sealed class NoBagsSlotFilter : ISlotFilter
+        {
+            public static readonly NoBagsSlotFilter Instance = new NoBagsSlotFilter();
 
             public bool CanAccept(int slot, in ItemStack stack) => !stack.HasContents;
         }

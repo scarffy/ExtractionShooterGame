@@ -170,7 +170,7 @@ MonoBehaviour:
   _capacity: 2
   _gridWidth: 2
   _access: 0
-  _slotRules: 2
+  _slotRules: 4
   _accessRange: 3
   _itemDatabase: {fileID: 11400000, guid: 15d7f319f1c14e948b3f5a0f01398544, type: 2}
 --- !u!114 &7301442087190330211

@@ -80,8 +80,9 @@ namespace ExtractionShooter.Gameplay.Session
             return stored;
         }
 
+        /// <param name="insideBag">Restoring a bag's contents: it may hold (empty) bags, but theirs may not.</param>
         private static void Restore(StoredContainer stored, ItemContainer target, ItemContainer overflow,
-            PlayerProfile profile, NetworkManager networkManager, bool canHoldBags)
+            PlayerProfile profile, NetworkManager networkManager, bool canHoldBags, bool insideBag = false)
         {
             SlotInventory inventory = target != null ? target.ServerInventory : null;
             ItemDatabase database = target != null ? target.ItemDatabase : null;
@@ -101,7 +102,8 @@ namespace ExtractionShooter.Gameplay.Session
                     stack = ItemFactory.ServerCreate(networkManager, definition).WithRotation(item.Rotated);
                     if (stack.IsEmpty) continue;
                     if (ItemContainer.TryResolveContents(networkManager, stack, out ItemContainer storage))
-                        Restore(profile.FindBag(item.ContentsKey), storage, null, profile, networkManager, canHoldBags: false);
+                        Restore(profile.FindBag(item.ContentsKey), storage, null, profile, networkManager,
+                            canHoldBags: !insideBag, insideBag: true);
                 }
 
                 if (inventory.TryPlace(item.Slot, stack) == InventoryResult.Success) continue;
