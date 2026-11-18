@@ -10,7 +10,10 @@ bots that take cover, flank and hear gunshots · compass, map and tactical panel
 a 160 m raid map (compound, hangar, village, vault loot room) with free, paid and late-raid exits ·
 carried weight (e.g. 27.8 / 70 kg) that slows you when heavy · end-of-raid summary (kills, value in and out, profit) ·
 private containers (only the owner or current looter receives contents) · primitive humanoid characters with
-worn gear and a first-person viewmodel.
+worn gear and a first-person viewmodel · Easy / Normal / Hard raids (each map offers two) · Delta Force-style
+loot rarity colours, keys and locked rooms · stash upgrades, workbench crafting and gun bench presets ·
+squad name tags and pings · main menu, pause menu and settings (key rebinding, sensitivity, FOV, audio,
+graphics) · healing with use animations, cancel and quick heal.
 
-Open the project in Unity 6000.3, open `Assets/_Game/Scenes/Sandbox.unity` and press Play, then Host.
+Open the project in Unity 6000.3, open `Assets/_Game/Scenes/Sandbox.unity`, press Play, enter a name and press Host game.
 See [Assets/_Game/README.md](Assets/_Game/README.md) for the full design, controls and code layout.
