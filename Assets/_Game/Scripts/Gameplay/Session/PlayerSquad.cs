@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ExtractionShooter.Core.Matchmaking;
+using ExtractionShooter.Core.Raid;
 using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
@@ -21,6 +22,8 @@ namespace ExtractionShooter.Gameplay.Session
         Unready = 7,
         FindMatch = 8,
         CancelMatch = 9,
+        /// <summary>Leader: the difficulty for the next search (argument: "Easy", "Normal" or "Hard").</summary>
+        SetDifficulty = 10,
     }
 
     /// <summary>
@@ -50,6 +53,8 @@ namespace ExtractionShooter.Gameplay.Session
         private readonly SyncVar<int> _queuePlayers = new SyncVar<int>(new SyncTypeSettings(ReadPermission.OwnerOnly));
         private readonly SyncVar<int> _queueCapacity = new SyncVar<int>(new SyncTypeSettings(ReadPermission.OwnerOnly));
         private readonly SyncVar<int> _queueSeconds = new SyncVar<int>(new SyncTypeSettings(ReadPermission.OwnerOnly));
+        private readonly SyncVar<RaidDifficulty> _difficulty = new SyncVar<RaidDifficulty>(RaidDifficulty.Normal,
+            new SyncTypeSettings(ReadPermission.OwnerOnly));
 
         private PlayerSession _session;
 
@@ -87,6 +92,9 @@ namespace ExtractionShooter.Gameplay.Session
 
         public bool IsSearching => _queuePhase.Value != MatchmakingPhase.Idle;
 
+        /// <summary>Owner side: the difficulty the squad's leader picked (a player with no squad picks their own).</summary>
+        public RaidDifficulty Difficulty => _difficulty.Value;
+
         /// <summary>Server: the player id used by the lobby (the owner's client id, cached at spawn).</summary>
         internal int ServerPlayerId { get; private set; } = -1;
 
@@ -102,6 +110,7 @@ namespace ExtractionShooter.Gameplay.Session
             _queuePlayers.OnChange += OnIntChanged;
             _queueCapacity.OnChange += OnIntChanged;
             _queueSeconds.OnChange += OnIntChanged;
+            _difficulty.OnChange += OnDifficultyChanged;
         }
 
         private void OnDestroy()
@@ -115,6 +124,7 @@ namespace ExtractionShooter.Gameplay.Session
             _queuePlayers.OnChange -= OnIntChanged;
             _queueCapacity.OnChange -= OnIntChanged;
             _queueSeconds.OnChange -= OnIntChanged;
+            _difficulty.OnChange -= OnDifficultyChanged;
         }
 
         public override void OnStartServer()
@@ -189,8 +199,13 @@ namespace ExtractionShooter.Gameplay.Session
 
         public void RequestSetReady(bool ready) => Send(ready ? SquadCommand.Ready : SquadCommand.Unready);
 
-        /// <summary>Leader only: queues the squad (a player with no squad queues solo). Every member must be ready.</summary>
-        public void RequestFindMatch() => Send(SquadCommand.FindMatch);
+        /// <summary>
+        /// Leader only: queues the squad (a player with no squad queues solo) at this difficulty. Every member must be ready.
+        /// </summary>
+        public void RequestFindMatch(RaidDifficulty difficulty) => Send(SquadCommand.FindMatch, difficulty.DisplayName());
+
+        /// <summary>Leader (or a player with no squad): the difficulty for the next search; squadmates see it.</summary>
+        public void RequestSetDifficulty(RaidDifficulty difficulty) => Send(SquadCommand.SetDifficulty, difficulty.DisplayName());
 
         public void RequestCancelMatch() => Send(SquadCommand.CancelMatch);
 
@@ -213,8 +228,11 @@ namespace ExtractionShooter.Gameplay.Session
         // ---------------- Server: state from the lobby ----------------
 
         /// <summary>Server, lobby: publishes this player's squad and queue state (unchanged values are not resent).</summary>
-        internal void ServerApply(int squadId, string code, bool isLeader, bool isReady, string inviteFrom, QueueStatus queue)
+        internal void ServerApply(int squadId, string code, bool isLeader, bool isReady, string inviteFrom, QueueStatus queue,
+            RaidDifficulty difficulty)
         {
+            if (!IsServerInitialized) return;
+            _difficulty.Value = difficulty;
             if (!IsServerInitialized) return;
             _squadId.Value = squadId;
             _squadCode.Value = code ?? string.Empty;
@@ -263,6 +281,11 @@ namespace ExtractionShooter.Gameplay.Session
         }
 
         private void OnIntChanged(int previous, int current, bool asServer)
+        {
+            if (!asServer) Changed?.Invoke();
+        }
+
+        private void OnDifficultyChanged(RaidDifficulty previous, RaidDifficulty current, bool asServer)
         {
             if (!asServer) Changed?.Invoke();
         }

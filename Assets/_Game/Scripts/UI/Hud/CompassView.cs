@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ExtractionShooter.Core.Input;
 using ExtractionShooter.Core.Navigation;
 using ExtractionShooter.Core.Raid;
+using ExtractionShooter.Core.Squad;
 using ExtractionShooter.Gameplay.Player;
 using ExtractionShooter.Gameplay.Raid;
 using ExtractionShooter.Gameplay.Session;
@@ -15,7 +16,8 @@ namespace ExtractionShooter.UI.Hud
     /// small numbers between), scrolling with the local player's yaw, the bearing being faced as three digits, and a
     /// marker with the distance for every extraction point (pinned to the strip's edge when it is behind you; faded
     /// while the point is closed or unaffordable), and a hint under the heading when the point you stand in won't let
-    /// you out yet ("Exit closed: opens in 03:12"). Shown while the player is alive, in a raid and in control. Built in code.
+    /// you out yet ("Exit closed: opens in 03:12"), plus the squad's pings in their ping colour. Shown while the
+    /// player is alive, in a raid and in control. Built in code.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(UIDocument))]
@@ -48,6 +50,7 @@ namespace ExtractionShooter.UI.Hud
 
         private readonly List<Tick> _ticks = new List<Tick>();
         private readonly List<Marker> _markers = new List<Marker>();
+        private readonly List<Marker> _pingMarkers = new List<Marker>();
 
         private VisualElement _root;
         private VisualElement _strip;
@@ -139,6 +142,7 @@ namespace ExtractionShooter.UI.Hud
             _root = null;
             _ticks.Clear();
             _markers.Clear();
+            _pingMarkers.Clear();
         }
 
         private void LateUpdate()
@@ -174,6 +178,7 @@ namespace ExtractionShooter.UI.Hud
 
             _heading.text = NavigationMath.FormatBearing(heading);
             UpdateMarkers(player, heading, pixelsPerDegree, half);
+            UpdatePingMarkers(player.transform.position, heading, pixelsPerDegree, half);
         }
 
         private void UpdateMarkers(PlayerCharacter player, float heading, float pixelsPerDegree, float half)
@@ -217,6 +222,41 @@ namespace ExtractionShooter.UI.Hud
 
             MapUi.Show(_hint, blocked != null);
             if (blocked != null) _hint.text = blocked;
+        }
+
+        /// <summary>Squad pings (<see cref="SquadPings"/>) on the marker row, in their ping colour, with the distance.</summary>
+        private void UpdatePingMarkers(Vector3 position, float heading, float pixelsPerDegree, float half)
+        {
+            SquadPings.Prune();
+            IReadOnlyList<SquadPing> pings = SquadPings.Board.Active;
+            while (_pingMarkers.Count < pings.Count) _pingMarkers.Add(CreateMarker());
+
+            float edge = half - MarkerSize;
+            for (int i = 0; i < _pingMarkers.Count; i++)
+            {
+                Marker marker = _pingMarkers[i];
+                bool used = i < pings.Count;
+                MapUi.Show(marker.Diamond, used);
+                MapUi.Show(marker.Distance, used);
+                if (!used) continue;
+
+                SquadPing ping = pings[i];
+                Color color = PingStyle.ColorOf(ping.Kind);
+                marker.Diamond.style.backgroundColor = color;
+                marker.Distance.style.color = color;
+
+                float bearing = NavigationMath.BearingTo(position.x, position.z, ping.X, ping.Z);
+                float offset = NavigationMath.StripOffset(heading, bearing, pixelsPerDegree);
+                bool pinned = Mathf.Abs(offset) > edge;
+                float x = half + Mathf.Clamp(offset, -edge, edge);
+                MapUi.Move(marker.Diamond, x - MarkerSize * 0.5f, MarkerRowTop);
+                marker.Diamond.style.opacity = pinned ? 0.5f : 1f;
+                marker.Distance.text = NavigationMath.FormatDistance(
+                    NavigationMath.GroundDistance(position.x, position.z, ping.X, ping.Z));
+                float labelLeft = Mathf.Clamp(x - LabelWidth * 0.5f, 0f, _width - LabelWidth);
+                MapUi.Move(marker.Distance, labelLeft, MarkerRowTop + MarkerSize + 1f);
+                marker.Distance.style.opacity = pinned ? 0.5f : 1f;
+            }
         }
 
         /// <summary>The local player's credits (paid extractions); 0 before the session is known.</summary>

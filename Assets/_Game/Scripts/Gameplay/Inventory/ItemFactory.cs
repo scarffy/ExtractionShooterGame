@@ -7,7 +7,7 @@ namespace ExtractionShooter.Gameplay.Inventory
 {
     /// <summary>
     /// Server only: creates and destroys item instances with their per-instance state.
-    /// Armor starts at full durability; bags get a freshly spawned storage container.
+    /// Armor starts at full durability, keys with all their uses; bags get a freshly spawned storage container.
     /// Every item that may carry state must be created here, never with a bare <see cref="ItemStack"/>.
     /// Bag storage is spawned server-owned and private: nobody receives its contents until the bag is placed in a
     /// container, after which they go to whoever owns that container's contents (see <see cref="ItemContainer"/>).
@@ -27,6 +27,9 @@ namespace ExtractionShooter.Gameplay.Inventory
             {
                 case ArmorDefinition armor:
                     return new ItemStack(armor.Id, 1, armor.MaxDurability);
+
+                case KeyDefinition key:
+                    return new ItemStack(key.Id, 1, key.MaxUses);
 
                 case ContainerItemDefinition bag:
                 {

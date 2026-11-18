@@ -12,5 +12,8 @@ namespace ExtractionShooter.Gameplay.Inventory
         Melee = 6,
         Attachment = 7,
         Throwable = 8,
+
+        /// <summary>Opens locked doors (<see cref="KeyDefinition"/>).</summary>
+        Key = 9,
     }
 }

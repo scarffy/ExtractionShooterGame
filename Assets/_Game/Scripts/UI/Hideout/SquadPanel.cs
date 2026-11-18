@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ExtractionShooter.Core.Matchmaking;
+using ExtractionShooter.Core.Raid;
 using ExtractionShooter.Gameplay.Session;
 using UnityEngine.UIElements;
 
@@ -11,8 +12,8 @@ namespace ExtractionShooter.UI.Hideout
     /// <list type="bullet">
     /// <item>Squad tab: the squad code, members with leader and ready state, Ready, Create and Leave, invite by name,
     /// join by code, a pending invite (Accept / Decline) and the matchmaking status.</item>
-    /// <item>Header (every tab): one status line and the Find match / Cancel button; the Squad tab is highlighted while
-    /// an invite is pending.</item>
+    /// <item>Header (every tab): the difficulty picker (the map's two difficulties; the leader picks), one status line and the
+    /// Find match / Cancel button; the Squad tab is highlighted while an invite is pending.</item>
     /// </list>
     /// Every action is a request; the server's answer comes back through the squad's SyncVars and messages.
     /// Plain C#: owned by <see cref="StashScreen"/>.
@@ -51,11 +52,14 @@ namespace ExtractionShooter.UI.Hideout
         private readonly Button _findMatchButton;
         private readonly Button _tab;
         private readonly List<PlayerSquad> _squadmates = new List<PlayerSquad>();
+        private readonly DifficultyPicker _difficulty;
 
         private PlayerSquad _squad;
         private string _lastMessage = string.Empty;
         private bool _wasSearching;
-        private const string SearchingNotice = "Searching for a raid…";
+        // A pick sent to the server but not echoed back yet: shown and used for Find match until the server agrees.
+        private RaidDifficulty? _pendingDifficulty;
+        private const string SearchingNotice = "Searching for a";
 
         /// <param name="beforeAction">Called before any request is sent (the hideout cancels a drag in progress).</param>
         public SquadPanel(VisualElement root, Action beforeAction = null)
@@ -80,6 +84,8 @@ namespace ExtractionShooter.UI.Hideout
             _headerStatus = root.Q<Label>("queue-status");
             _findMatchButton = root.Q<Button>("find-match-button");
             _tab = root.Q<Button>("tab-squad");
+            _difficulty = new DifficultyPicker(root.Q<VisualElement>("difficulty-picker"));
+            _difficulty.Picked += PickDifficulty;
 
             if (_readyButton != null) _readyButton.clicked += ToggleReady;
             if (_createButton != null) _createButton.clicked += Create;
@@ -96,6 +102,8 @@ namespace ExtractionShooter.UI.Hideout
         {
             Bind(null);
             PlayerSquad.AnyChanged -= Refresh;
+            _difficulty.Picked -= PickDifficulty;
+            _difficulty.Dispose();
             if (_readyButton != null) _readyButton.clicked -= ToggleReady;
             if (_createButton != null) _createButton.clicked -= Create;
             if (_leaveButton != null) _leaveButton.clicked -= Leave;
@@ -121,6 +129,7 @@ namespace ExtractionShooter.UI.Hideout
             }
             _squad = squad;
             _lastMessage = string.Empty;
+            _pendingDifficulty = null;
             if (_squad != null)
             {
                 _squad.Changed += Refresh;
@@ -164,11 +173,15 @@ namespace ExtractionShooter.UI.Hideout
         {
             bool searching = squad != null && squad.IsSearching;
             // The search ended (launched into a raid, or stopped): its "Searching…" notice is stale now.
-            if (_wasSearching && !searching && _lastMessage == SearchingNotice) _lastMessage = string.Empty;
+            if (_wasSearching && !searching && _lastMessage.StartsWith(SearchingNotice, StringComparison.Ordinal)) _lastMessage = string.Empty;
             _wasSearching = searching;
             bool canStart = squad != null && (!inSquad || squad.IsLeader);
 
-            string status = searching ? SquadRules.DescribeQueue(squad.Queue) : string.Empty;
+            MapDifficulties map = SquadLobby.Instance != null ? SquadLobby.Instance.Difficulties : MapDifficulties.EasyNormal;
+            RaidDifficulty difficulty = SelectedDifficulty(map);
+            _difficulty.Show(map, difficulty, canStart && !searching);
+
+            string status = searching ? $"{difficulty.DisplayName()}  ·  {SquadRules.DescribeQueue(squad.Queue)}" : string.Empty;
             SetText(_queueDetail, searching ? status : canStart ? "Not searching." : "Waiting for the squad leader to start the search.");
             SetText(_headerStatus, searching ? status : !string.IsNullOrEmpty(_lastMessage) ? _lastMessage
                 : inSquad && !canStart ? "Get ready — the leader starts the search." : string.Empty);
@@ -259,7 +272,25 @@ namespace ExtractionShooter.UI.Hideout
         {
             if (!Begin()) return;
             if (_squad.IsSearching) _squad.RequestCancelMatch();
-            else _squad.RequestFindMatch();
+            else _squad.RequestFindMatch(SelectedDifficulty(SquadLobby.Instance != null ? SquadLobby.Instance.Difficulties : MapDifficulties.EasyNormal));
+        }
+
+        private void PickDifficulty(RaidDifficulty difficulty)
+        {
+            if (!Begin()) return;
+            _pendingDifficulty = difficulty;
+            _squad.RequestSetDifficulty(difficulty);
+            Refresh();
+        }
+
+        /// <summary>The pick to show and search with: a pick not yet confirmed by the server, else the server's.</summary>
+        private RaidDifficulty SelectedDifficulty(MapDifficulties map)
+        {
+            if (_squad == null) return RaidDifficulty.Normal;
+            if (_pendingDifficulty.HasValue && _pendingDifficulty.Value == _squad.Difficulty) _pendingDifficulty = null;
+            // Only the leader (or a solo player) has a pick of their own; squadmates always show the leader's.
+            bool ownPick = !_squad.InSquad || _squad.IsLeader;
+            return map.Clamp(ownPick && _pendingDifficulty.HasValue ? _pendingDifficulty.Value : _squad.Difficulty);
         }
 
         /// <summary>Clears the last message and runs the pre-action hook. False when there is no squad state to act on.</summary>

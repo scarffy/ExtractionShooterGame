@@ -1,5 +1,6 @@
 using ExtractionShooter.Core.Input;
 using ExtractionShooter.Gameplay.Combat;
+using ExtractionShooter.Gameplay.Input;
 using ExtractionShooter.Gameplay.Player;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -101,7 +102,9 @@ namespace ExtractionShooter.UI.Hud
             SetVisible(_treatmentTrack, treating);
             if (treating)
             {
-                _treatment.text = $"Using {injuries.TreatmentName}";
+                string cancel = player.Input is InputSystemPlayerInput keys ? keys.BindingLabel("CancelUse") : string.Empty;
+                _treatment.text = string.IsNullOrEmpty(cancel) ? $"Using {injuries.TreatmentName}"
+                    : $"Using {injuries.TreatmentName}   [{cancel}] cancel";
                 _treatmentFill.style.width = BarWidth * 0.6f * injuries.TreatmentProgress;
             }
         }

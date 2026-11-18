@@ -23,6 +23,7 @@ MonoBehaviour:
   _useSeconds: 2.5
   _stopsBleeding: 1
   _fixesFracture: 0
+  _useVisual: 1
   _width: 1
   _height: 1
   _weight: 0.05

@@ -15,6 +15,7 @@ namespace ExtractionShooter.Gameplay.Inventory
         [SerializeField] private LootTable _lootTable;
 
         private ItemContainer _container;
+        private int _rollBonus;
 
         private void Awake()
         {
@@ -42,13 +43,16 @@ namespace ExtractionShooter.Gameplay.Inventory
             _lootTable = table;
         }
 
+        /// <summary>Server, before spawning: extra (or fewer) loot rolls for the raid's difficulty.</summary>
+        public void ServerSetRollBonus(int rollBonus) => _rollBonus = rollBonus;
+
         public override void OnStartServer()
         {
             base.OnStartServer();
             if (_lootTable == null) return;
 
             LootFiller.ServerFill(NetworkManager, _lootTable, _container.ServerInventory,
-                new System.Random(unchecked(System.Environment.TickCount * 31 + ObjectId)));
+                new System.Random(unchecked(System.Environment.TickCount * 31 + ObjectId)), _rollBonus);
         }
     }
 }

@@ -1,5 +1,6 @@
 using ExtractionShooter.Core.Combat;
 using ExtractionShooter.Gameplay.Inventory;
+using ExtractionShooter.Gameplay.Settings;
 using ExtractionShooter.Gameplay.Weapons;
 using FishNet.Object;
 using UnityEngine;
@@ -32,7 +33,7 @@ namespace ExtractionShooter.Gameplay.Player
         private Camera _camera;
         private WeaponAim _aim;
         private PlayerEquipment _equipment;
-        private float _baseFieldOfView = 70f;
+        private float _cameraFieldOfView = 60f;
         private float _yaw;
         private float _pitch;
 
@@ -75,7 +76,7 @@ namespace ExtractionShooter.Gameplay.Player
             _yaw = transform.eulerAngles.y;
             _pitch = 0f;
             _camera = Camera.main;
-            if (_camera != null) _baseFieldOfView = _camera.fieldOfView;
+            if (_camera != null) _cameraFieldOfView = _camera.fieldOfView;
 
             if (_camera == null)
                 Debug.LogError($"[{nameof(PlayerLook)}] No camera tagged MainCamera in the scene.", this);
@@ -114,19 +115,23 @@ namespace ExtractionShooter.Gameplay.Player
         public override void OnStopClient()
         {
             base.OnStopClient();
-            if (IsOwner && _camera != null) _camera.fieldOfView = _baseFieldOfView;
+            if (IsOwner && _camera != null) _camera.fieldOfView = _cameraFieldOfView;
             _camera = null;
             ClearRecoil();
         }
 
         /// <summary>Owner: the camera's field of view right now (zoomed while aiming).</summary>
-        public float FieldOfView => _camera != null ? _camera.fieldOfView : _baseFieldOfView;
+        public float FieldOfView => _camera != null ? _camera.fieldOfView : BaseFieldOfView;
+
+        /// <summary>Hip-fire field of view from the player's settings.</summary>
+        private static float BaseFieldOfView => GameSettingsStore.Current.FieldOfView;
 
         private float AimFieldOfView()
         {
             float aim = _aim != null ? _aim.Aim01 : 0f;
-            if (aim <= 0f || _equipment == null || !_equipment.TryGetActiveWeaponStats(out WeaponStats stats)) return _baseFieldOfView;
-            return Mathf.Lerp(_baseFieldOfView, Mathf.Min(_baseFieldOfView, stats.AimFieldOfView), aim);
+            float baseFieldOfView = BaseFieldOfView;
+            if (aim <= 0f || _equipment == null || !_equipment.TryGetActiveWeaponStats(out WeaponStats stats)) return baseFieldOfView;
+            return Mathf.Lerp(baseFieldOfView, Mathf.Min(baseFieldOfView, stats.AimFieldOfView), aim);
         }
 
         private void Update()
@@ -134,7 +139,9 @@ namespace ExtractionShooter.Gameplay.Player
             if (!IsOwner) return;
 
             // Zoomed in, the same mouse movement turns less, so the reticle moves at the same speed on screen.
-            Vector2 delta = _character.Input.LookDelta * (FieldOfView / _baseFieldOfView);
+            // The player's aim sensitivity setting scales that while aiming.
+            float aimSensitivity = Mathf.Lerp(1f, GameSettingsStore.Current.AimSensitivity, _aim != null ? _aim.Aim01 : 0f);
+            Vector2 delta = _character.Input.LookDelta * (FieldOfView / BaseFieldOfView * aimSensitivity);
 
             // Input against the recoil cancels the offset first; the rest turns the view.
             float up = RecoilPattern.AbsorbInput(_recoilTarget.Pitch, delta.y, out float absorbedPitch);

@@ -85,6 +85,7 @@ namespace ExtractionShooter.Gameplay.Session
         private readonly SyncVar<int> _safeBoxTier = new SyncVar<int>(new SyncTypeSettings(ReadPermission.OwnerOnly));
 
         private PlayerTrading _trading;
+        private PlayerHideout _hideout;
         private ProfileStore _store;
         private string _nameKey;
         private PlayerCharacter _character;
@@ -123,9 +124,13 @@ namespace ExtractionShooter.Gameplay.Session
         /// <summary>Credits and the lobby trader, or null if this session has none.</summary>
         public PlayerTrading Trading => _trading;
 
+        /// <summary>Stash upgrades, the workbench and gun bench presets, or null if this session has none.</summary>
+        public PlayerHideout Hideout => _hideout;
+
         private void Awake()
         {
             _trading = GetComponent<PlayerTrading>();
+            _hideout = GetComponent<PlayerHideout>();
             _playerName.OnChange += OnNameChanged;
             _state.OnChange += OnStateChanged;
             _openBag.OnChange += OnOpenBagChanged;
@@ -276,6 +281,8 @@ namespace ExtractionShooter.Gameplay.Session
             if (_store.TryLoad(playerName, out PlayerProfile profile))
             {
                 ServerApplySafeBoxTier(profile.SafeBoxTier);
+                // Sizes the stash for its bought level before the items are put back.
+                if (_hideout != null) _hideout.ServerLoad(profile);
                 ProfileSnapshot.ServerRestore(profile, Containers, NetworkManager);
                 if (_trading != null) _trading.ServerSetMoney(profile.Money);
                 // Covers gear lost by leaving mid-raid, the same as a death.
@@ -286,6 +293,7 @@ namespace ExtractionShooter.Gameplay.Session
             else
             {
                 ServerApplySafeBoxTier(0);
+                if (_hideout != null) _hideout.ServerLoad(null);
                 LoadoutBuilder.ServerGive(NetworkManager, _starterKit, _loadout);
                 ServerIssueMeleeIfMissing();
                 if (_trading != null) _trading.ServerSetMoney(0);
@@ -581,6 +589,7 @@ namespace ExtractionShooter.Gameplay.Session
             PlayerProfile profile = ProfileSnapshot.ServerCapture(_playerName.Value, Containers, NetworkManager);
             if (_trading != null) profile.Money = _trading.Money;
             profile.SafeBoxTier = _safeBoxTier.Value;
+            if (_hideout != null) _hideout.ServerWriteTo(profile);
             _store.Save(profile);
         }
 

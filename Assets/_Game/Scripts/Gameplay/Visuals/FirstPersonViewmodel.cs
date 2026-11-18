@@ -1,3 +1,4 @@
+using ExtractionShooter.Core.Combat;
 using ExtractionShooter.Core.Inventory;
 using ExtractionShooter.Core.Visuals;
 using ExtractionShooter.Gameplay.Combat;
@@ -19,6 +20,8 @@ namespace ExtractionShooter.Gameplay.Visuals
     /// <item>Sway against look movement, a walking bob (both subtle while aiming), a kick back on every shot, lowered
     /// while sprinting, reloading or treating wounds, raised after switching weapons.</item>
     /// <item>Muzzle flash on every shot fired. Near walls the weapon pulls back instead of poking through them.</item>
+    /// <item>Healing: the weapon is lowered and the left hand brings the medical item up in front of you
+    /// (<see cref="UseItemModel"/>, moved by <see cref="UseItemMotion"/>).</item>
     /// </list>
     /// Owner only, presentation only: it reads the networked weapon, aim and stance state and never changes it.
     /// No shadows, so the view model never darkens the world or itself.
@@ -52,6 +55,9 @@ namespace ExtractionShooter.Gameplay.Visuals
         [SerializeField] private Vector3 _sprintEuler = new Vector3(18f, -38f, 14f);
         [SerializeField] private Vector3 _loweredOffset = new Vector3(0f, -0.07f, -0.04f);
         [SerializeField] private Vector3 _loweredEuler = new Vector3(28f, -12f, 8f);
+
+        [Tooltip("Where the left hand holds a medical item while healing (camera space, metres).")]
+        [SerializeField] private Vector3 _useItemRest = new Vector3(-0.08f, -0.17f, 0.42f);
 
         [Tooltip("Seconds to bring a weapon up after switching.")]
         [SerializeField, Min(0.01f)] private float _raiseSeconds = 0.3f;
@@ -110,6 +116,9 @@ namespace ExtractionShooter.Gameplay.Visuals
 
         private float _sprint, _sprintVelocity;
         private float _lowered, _loweredVelocity;
+        private float _use, _useVelocity;
+        private Transform _useItem;
+        private UseItemVisual _useItemKind;
         private float _swayYaw, _swayYawVelocity, _swayPitch, _swayPitchVelocity;
         private float _kick, _kickVelocity;
         private float _wall, _wallVelocity;
@@ -176,6 +185,8 @@ namespace ExtractionShooter.Gameplay.Visuals
             _model = null;
             _modelWeapon = null;
             _modelKey = null;
+            _useItem = null;
+            _useItemKind = UseItemVisual.None;
             _camera = null;
         }
 
@@ -317,6 +328,38 @@ namespace ExtractionShooter.Gameplay.Visuals
             _arms[1].End.rotation = grip;
             _arms[0].Solve(_model.Support.position, _root.TransformDirection(new Vector3(pistol ? -0.5f : -0.8f, -1f, -0.3f)));
             _arms[0].End.rotation = grip;
+
+            AnimateUseItem(deltaTime);
+        }
+
+        /// <summary>Healing: the left hand lets go of the weapon and holds the medical item up.</summary>
+        private void AnimateUseItem(float deltaTime)
+        {
+            PlayerInjuries injuries = _character.Injuries;
+            UseItemVisual kind = injuries != null ? injuries.UseVisual : UseItemVisual.None;
+            if (kind != UseItemVisual.None && kind != _useItemKind)
+            {
+                if (_useItem != null) Destroy(_useItem.gameObject);
+                _useItemKind = kind;
+                _useItem = UseItemModel.Build(_root, kind, _profile);
+                ConfigureRenderers();
+            }
+            _use = ViewmodelMotion.SmoothDamp(_use, kind != UseItemVisual.None ? 1f : 0f, ref _useVelocity, _carrySmoothTime, deltaTime);
+            if (_useItem == null) return;
+
+            bool shown = _use > 0.02f;
+            if (_useItem.gameObject.activeSelf != shown) _useItem.gameObject.SetActive(shown);
+            if (!shown) return;
+
+            float seconds = kind != UseItemVisual.None ? Time.time - injuries.UseStartedAt : UseItemMotion.RaiseSeconds;
+            UsePose pose = UseItemMotion.Evaluate(_useItemKind, seconds, injuries != null ? injuries.TreatmentProgress : 1f);
+            // Coming in and going away: slide up from below the view.
+            Vector3 rest = _root.TransformPoint(_useItemRest + new Vector3(0f, -0.18f * (1f - _use), 0f));
+            UseItemModel.Pose(_useItem, rest, _root.rotation, pose);
+
+            Vector3 hand = Vector3.Lerp(_model.Support.position, _useItem.position, _use);
+            _arms[0].Solve(hand, _root.TransformDirection(new Vector3(-0.8f, -1f, -0.3f)));
+            _arms[0].End.rotation = Quaternion.Slerp(_model.Grip.rotation, _useItem.rotation, _use);
         }
 
         /// <summary>0 nothing ahead, 1 a wall right at the eye (within <see cref="_wallReach"/>).</summary>

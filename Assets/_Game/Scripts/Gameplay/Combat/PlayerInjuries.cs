@@ -14,10 +14,14 @@ namespace ExtractionShooter.Gameplay.Combat
     /// <item>Bleeding: a body or leg hit that gets through armor may start it (<see cref="InjuryRules"/>); it drains
     /// health every few seconds until a bandage or medkit stops it.</item>
     /// <item>Fractured leg: a heavy leg hit may break it: no sprinting and slower movement until a splint sets it.</item>
-    /// <item>Treatment: using a medical item consumes it up front, then heals over its use time and stops bleeding /
-    /// sets the fracture at the end. Meanwhile no shooting, no sprinting and slower movement. Death ends it.</item>
+    /// <item>Treatment: using a medical item takes its use time (no shooting or sprinting, slower movement); when it
+    /// completes the item is used up and it heals, stops bleeding and/or sets the fracture, all at once
+    /// (<see cref="TreatmentRules"/>). The owner cancels with the cancel key, by firing or by switching weapons: the item
+    /// is kept and nothing happens. Losing the item meanwhile (dropped, moved out) also cancels it. Death ends it.</item>
+    /// <item>Quick heal (owner): uses the best medical item carried for the current wounds.</item>
     /// </list>
-    /// The owner sees everything (HUD); others see bleeding and the fracture (for presentation later).
+    /// The owner sees everything (HUD); everyone sees bleeding, the fracture and what is being used
+    /// (<see cref="UseVisual"/>, for the body and hand animation).
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(Health), typeof(PlayerMotor))]
@@ -41,12 +45,15 @@ namespace ExtractionShooter.Gameplay.Combat
         private readonly SyncVar<bool> _fractured = new SyncVar<bool>();
         private readonly SyncVar<string> _treatmentName = new SyncVar<string>(new SyncTypeSettings(ReadPermission.OwnerOnly));
         private readonly SyncVar<byte> _treatmentPercent = new SyncVar<byte>(new SyncTypeSettings(ReadPermission.OwnerOnly));
+        private readonly SyncVar<UseItemVisual> _useVisual = new SyncVar<UseItemVisual>();
 
         private Health _health;
         private PlayerMotor _motor;
+        private PlayerCharacter _character;
         private MedicalDefinition _treatment;
+        private Func<bool> _consume;
         private float _treatmentElapsed;
-        private int _treatmentHealed;
+        private float _useStartedAt;
         private float _bleedTimer;
 
         /// <summary>Owner side: anything shown on the HUD changed.</summary>
@@ -55,8 +62,14 @@ namespace ExtractionShooter.Gameplay.Combat
         public bool IsBleeding => _bleeding.Value;
         public bool IsFractured => _fractured.Value;
 
-        /// <summary>Owner and server: a treatment is in progress.</summary>
-        public bool IsTreating => IsServerInitialized ? _treatment != null : !string.IsNullOrEmpty(_treatmentName.Value);
+        /// <summary>A treatment is in progress (server, owner and other players).</summary>
+        public bool IsTreating => IsServerInitialized ? _treatment != null : _useVisual.Value != UseItemVisual.None;
+
+        /// <summary>What is being used (None when not treating). Everyone sees it.</summary>
+        public UseItemVisual UseVisual => _useVisual.Value;
+
+        /// <summary>Local time the current use started (for animation on any peer); valid while <see cref="IsTreating"/>.</summary>
+        public float UseStartedAt => _useStartedAt;
 
         /// <summary>Owner: the item being used, or empty.</summary>
         public string TreatmentName => _treatmentName.Value;
@@ -80,7 +93,9 @@ namespace ExtractionShooter.Gameplay.Combat
         {
             _health = GetComponent<Health>();
             _motor = GetComponent<PlayerMotor>();
+            _character = GetComponent<PlayerCharacter>();
             _bleeding.OnChange += OnBoolChanged;
+            _useVisual.OnChange += OnUseVisualChanged;
             _fractured.OnChange += OnBoolChanged;
             _treatmentName.OnChange += OnNameChanged;
             _treatmentPercent.OnChange += OnPercentChanged;
@@ -92,6 +107,7 @@ namespace ExtractionShooter.Gameplay.Combat
             _fractured.OnChange -= OnBoolChanged;
             _treatmentName.OnChange -= OnNameChanged;
             _treatmentPercent.OnChange -= OnPercentChanged;
+            _useVisual.OnChange -= OnUseVisualChanged;
         }
 
         public override void OnStartServer()
@@ -108,29 +124,59 @@ namespace ExtractionShooter.Gameplay.Combat
             _health.ServerDied -= OnServerDied;
         }
 
+        /// <summary>Server: the player's wounds now.</summary>
+        public WoundState ServerWounds => new WoundState(_health.Max - _health.Current, _bleeding.Value, _fractured.Value);
+
         /// <summary>
         /// Server: starts a treatment if it would do something (heal below max, stop bleeding, set a fracture) and none is
-        /// running. The caller consumes the item only when this returns true.
+        /// running. <paramref name="consume"/> is called when it completes: it takes the item and returns false if the item
+        /// is gone, in which case the treatment does nothing.
         /// </summary>
-        public bool ServerStartTreatment(MedicalDefinition medical)
+        public bool ServerStartTreatment(MedicalDefinition medical, Func<bool> consume)
         {
             if (!IsServerInitialized || medical == null || _treatment != null || !_health.IsAlive) return false;
-
-            bool useful = (medical.HealAmount > 0 && _health.Current < _health.Max) ||
-                          (medical.StopsBleeding && _bleeding.Value) ||
-                          (medical.FixesFracture && _fractured.Value);
-            if (!useful) return false;
+            if (!TreatmentRules.IsUseful(medical.ToOption(), ServerWounds)) return false;
 
             _treatment = medical;
+            _consume = consume;
             _treatmentElapsed = 0f;
-            _treatmentHealed = 0;
             _treatmentName.Value = medical.DisplayName;
             _treatmentPercent.Value = 0;
+            _useVisual.Value = medical.UseVisual == UseItemVisual.None ? UseItemVisual.Bandage : medical.UseVisual;
+            _useStartedAt = Time.time;
             return true;
+        }
+
+        /// <summary>Owner: stops the current treatment; the item is kept and nothing happens.</summary>
+        public void RequestCancelTreatment()
+        {
+            if (IsOwner && IsTreating) ServerCancelTreatment();
+        }
+
+        [ServerRpc]
+        private void ServerCancelTreatment() => EndTreatment();
+
+        /// <summary>Owner: the cancel key, firing or switching weapons stops a treatment; the quick-heal key starts one.</summary>
+        private void HandleOwnerInput()
+        {
+            if (_character == null || !_health.IsAlive) return;
+            var input = _character.Input;
+            if (input == null) return;
+
+            if (IsTreating)
+            {
+                if (input.CancelUsePressed || input.FirePressed || input.WeaponSlotPressed >= 0 || input.CycleWeaponPressed)
+                    RequestCancelTreatment();
+            }
+            else if (input.QuickHealPressed && _character.Inventory != null)
+            {
+                _character.Inventory.RequestQuickHeal();
+            }
         }
 
         private void Update()
         {
+            if (IsOwner) HandleOwnerInput();
             if (!IsServerInitialized || !_health.IsAlive) return;
             float deltaTime = Time.deltaTime;
 
@@ -148,21 +194,20 @@ namespace ExtractionShooter.Gameplay.Combat
             if (_treatment == null) return;
 
             _treatmentElapsed += deltaTime;
-            int due = InjuryRules.HealDue(_treatment.HealAmount, _treatmentElapsed, _treatment.UseSeconds);
-            if (due > _treatmentHealed)
-            {
-                _health.ServerHeal(due - _treatmentHealed);
-                _treatmentHealed = due;
-            }
-
             float progress = Mathf.Clamp01(_treatmentElapsed / _treatment.UseSeconds);
             byte percent = (byte)Mathf.RoundToInt(progress * 100f);
             if (percent != _treatmentPercent.Value) _treatmentPercent.Value = percent;
 
             if (progress >= 1f)
             {
-                if (_treatment.StopsBleeding) SetBleeding(false);
-                if (_treatment.FixesFracture) _fractured.Value = false;
+                MedicalDefinition medical = _treatment;
+                // The item is used up only now; if it was dropped or moved away meanwhile, nothing happens.
+                if (_consume == null || _consume())
+                {
+                    if (medical.HealAmount > 0) _health.ServerHeal(medical.HealAmount);
+                    if (medical.StopsBleeding) SetBleeding(false);
+                    if (medical.FixesFracture) _fractured.Value = false;
+                }
                 EndTreatment();
             }
         }
@@ -192,8 +237,16 @@ namespace ExtractionShooter.Gameplay.Combat
         private void EndTreatment()
         {
             _treatment = null;
+            _consume = null;
+            _useVisual.Value = UseItemVisual.None;
             _treatmentName.Value = string.Empty;
             _treatmentPercent.Value = 0;
+        }
+
+        private void OnUseVisualChanged(UseItemVisual previous, UseItemVisual current, bool asServer)
+        {
+            if (current != UseItemVisual.None && previous == UseItemVisual.None && !asServer) _useStartedAt = Time.time;
+            if (!asServer) Changed?.Invoke();
         }
 
         private void OnBoolChanged(bool previous, bool current, bool asServer)

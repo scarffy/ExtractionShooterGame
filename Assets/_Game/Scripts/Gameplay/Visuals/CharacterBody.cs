@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ExtractionShooter.Core.Combat;
 using ExtractionShooter.Core.Visuals;
 using ExtractionShooter.Gameplay.Inventory;
 using ExtractionShooter.Gameplay.Weapons;
@@ -58,6 +59,8 @@ namespace ExtractionShooter.Gameplay.Visuals
         private HumanoidRig _rig;
         private Transform _held;
         private WeaponModel _heldModel;
+        private Transform _useItem;
+        private UseItemVisual _useItemKind;
         private string _gearKey;
         private string _weaponKey;
         private GearShape _armorShape;
@@ -305,6 +308,31 @@ namespace ExtractionShooter.Gameplay.Visuals
             PoseBody(deltaTime, out float moveBlend, out float swing);
             if (_heldModel != null) PoseWeapon();
             else PoseFreeArms(moveBlend, swing);
+            PoseUseItem();
+        }
+
+        /// <summary>Healing: the left hand leaves the weapon to hold the item in front of the chest (or at the leg).</summary>
+        private void PoseUseItem()
+        {
+            UseItemVisual kind = _target.UseItem;
+            if (kind != _useItemKind)
+            {
+                _useItemKind = kind;
+                if (_useItem != null) Destroy(_useItem.gameObject);
+                _useItem = UseItemModel.Build(transform, kind, _profile);
+                if (_useItem != null) ApplyRenderMode();
+            }
+            if (_useItem == null) return;
+
+            Quaternion body = transform.rotation;
+            Vector3 rest = _rig.Neck.position + body * new Vector3(-0.06f, -0.3f, 0.3f);
+            Quaternion restRotation = body * Quaternion.Euler(-20f, 0f, 0f);
+            UseItemModel.Pose(_useItem, rest, restRotation, UseItemMotion.Evaluate(kind, _target.UseSeconds, _target.UseProgress));
+
+            LimbChain left = _rig.Arms[0];
+            left.Solve(_useItem.position, transform.TransformDirection(new Vector3(-0.8f, -1f, -0.3f)));
+            left.End.rotation = _useItem.rotation;
+            _rig.Gloves[0].localPosition = Vector3.zero;
         }
 
         private void PoseBody(float deltaTime, out float moveBlend, out float swing)

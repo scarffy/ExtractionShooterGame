@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using ExtractionShooter.Core.Raid;
 
 namespace ExtractionShooter.Core.Matchmaking
 {
@@ -49,6 +50,9 @@ namespace ExtractionShooter.Core.Matchmaking
 
         /// <summary>Set by the lobby while the squad is in the matchmaking queue: nobody may join.</summary>
         public bool Locked { get; set; }
+
+        /// <summary>The difficulty the leader picked for the next search (the lobby keeps it to what the map offers).</summary>
+        public RaidDifficulty Difficulty { get; set; } = RaidDifficulty.Normal;
 
         public bool Contains(int player) => _members.Contains(player);
         public bool IsReady(int player) => _ready.Contains(player);

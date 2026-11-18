@@ -84,6 +84,10 @@ namespace ExtractionShooter.Gameplay.Audio
         public static AudioClip ReloadClick() =>
             Build("reload", 0.5f, (t, rng) => Click(t, 0.02f) + Click(t, 0.32f) * 0.8f, 0.2f, 9);
 
+        /// <summary>A short soft tick for menu buttons.</summary>
+        public static AudioClip UiClick() =>
+            Build("ui_click", 0.05f, (t, rng) => Click(t, 0f) * 0.5f, 0.3f, 12);
+
         public static AudioClip Hurt() =>
             Build("hurt", 0.22f, (t, rng) => (Mathf.Sin(2f * Mathf.PI * 70f * t) * 0.8f + Noise(rng) * 0.3f) * Mathf.Exp(-t * 18f), 0.7f, 10);
 
@@ -114,6 +118,11 @@ namespace ExtractionShooter.Gameplay.Audio
                 float hiss = Noise(rng) * 0.35f * Mathf.Clamp01(t * 6f) * Mathf.Exp(-t * 1.5f);
                 return pop + hiss;
             }, 0.15f, 13);
+
+        /// <summary>Squad ping: a short two-note blip (rising for a marker, a lower double beep for danger).</summary>
+        public static AudioClip PingBlip(bool danger) => danger
+            ? Build("ping_danger", 0.24f, (t, rng) => Tone(t, 0f, 0.09f, 740f) + Tone(t, 0.12f, 0.09f, 740f), 0.1f, 14)
+            : Build("ping", 0.2f, (t, rng) => Tone(t, 0f, 0.07f, 880f) + Tone(t, 0.08f, 0.1f, 1320f), 0.1f, 15);
 
         private static AudioClip Shot(string name, float length, float decay, float thumpHz, float thump, float crack, float lowPass) =>
             Build(name, length, (t, rng) =>
@@ -149,6 +158,15 @@ namespace ExtractionShooter.Gameplay.Audio
         }
 
         private static float Noise(System.Random rng) => (float)(rng.NextDouble() * 2.0 - 1.0);
+
+        /// <summary>A sine note from <paramref name="at"/> lasting <paramref name="length"/> seconds, with soft edges.</summary>
+        private static float Tone(float t, float at, float length, float hz)
+        {
+            float local = t - at;
+            if (local < 0f || local > length) return 0f;
+            float envelope = Mathf.Min(1f, local / 0.008f) * Mathf.Min(1f, (length - local) / 0.03f);
+            return Mathf.Sin(2f * Mathf.PI * hz * local) * envelope * 0.35f;
+        }
 
         private static float Click(float t, float at)
         {

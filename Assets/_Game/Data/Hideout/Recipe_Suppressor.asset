@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e411eb0a984048c49ca1805814563683, type: 3}
+  m_Name: Recipe_Suppressor
+  m_EditorClassIdentifier:
+  _recipeId: suppressor_from_compensator
+  _displayName: 
+  _inputs: 
+  - _item: {fileID: 11400000, guid: 5075672df5f24c21a878b7ccd3918cf3, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 48093b0006ef4f48ad85ac6ad7608600, type: 2}
+    _quantity: 3
+  _output: {fileID: 11400000, guid: f8a9b196a0314b42bec75aab41fbee1b, type: 2}
+  _outputQuantity: 1
+  _craftSeconds: 480
+  _creditCost: 300

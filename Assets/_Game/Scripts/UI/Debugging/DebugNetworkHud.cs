@@ -7,41 +7,32 @@ using UnityEngine;
 namespace ExtractionShooter.UI.Debugging
 {
     /// <summary>
-    /// Development-only connection panel (IMGUI). Shows Host / Server / Client
-    /// controls while the cursor is unlocked, and a health readout while playing.
-    /// Replace with real UI before release.
+    /// Development-only overlay (IMGUI, editor and development builds; does nothing in release builds).
+    /// Connecting, pausing and leaving belong to the main / pause menu (<see cref="Menu.GameMenu"/>); this only shows
+    /// the connection state, a health readout while playing and, for the host in the hideout, a credits grant for
+    /// testing. Hidden whenever a game menu is open, so it never covers one.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class DebugNetworkHud : MonoBehaviour
     {
-        private const float PanelWidth = 260f;
-        private const float ButtonHeight = 30f;
+        private const float PanelWidth = 220f;
+        private const float ButtonHeight = 26f;
 
         [SerializeField] private NetworkManager _networkManager;
-        [SerializeField] private string _defaultAddress = "localhost";
-
-        private string _address;
 
         private void Awake()
         {
             if (_networkManager == null) _networkManager = GetComponent<NetworkManager>();
-            _address = _defaultAddress;
         }
 
-        private void Update()
-        {
-            // Without a connection there is nothing to play: keep the cursor free so the panel is usable
-            // (the lock state can survive from an earlier session when domain reload is off).
-            if (_networkManager != null && CursorController.IsLocked &&
-                !_networkManager.ServerManager.Started && !_networkManager.ClientManager.Started)
-            {
-                CursorController.SetLocked(false);
-            }
-        }
-
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
         private void OnGUI()
         {
-            if (_networkManager == null) return;
+            if (_networkManager == null || MenuState.IsOpen) return;
+
+            bool serverStarted = _networkManager.ServerManager.Started;
+            bool clientStarted = _networkManager.ClientManager.Started;
+            if (!serverStarted && !clientStarted) return;
 
             if (CursorController.IsLocked)
             {
@@ -50,59 +41,20 @@ namespace ExtractionShooter.UI.Debugging
             }
 
             // Bottom-left, and the box wraps only its content, so it stays clear of the hideout and inventory screens.
-            const float areaHeight = 300f;
+            const float areaHeight = 120f;
             GUILayout.BeginArea(new Rect(10f, Screen.height - areaHeight - 10f, PanelWidth, areaHeight));
             GUILayout.FlexibleSpace();
             GUILayout.BeginVertical(GUI.skin.box);
-            DrawConnectionPanel();
-            GUILayout.EndVertical();
-            GUILayout.EndArea();
-        }
+            GUILayout.Label($"Dev · Server: {(serverStarted ? "on" : "off")}  Client: {(clientStarted ? "on" : "off")}");
 
-        private void DrawConnectionPanel()
-        {
-            bool serverStarted = _networkManager.ServerManager.Started;
-            bool clientStarted = _networkManager.ClientManager.Started;
-
-            GUILayout.Label($"Server: {(serverStarted ? "running" : "off")}   Client: {(clientStarted ? "connected" : "off")}");
-
-            if (!serverStarted && !clientStarted)
-            {
-                if (GUILayout.Button("Host (server + client)", GUILayout.Height(ButtonHeight)))
-                {
-                    _networkManager.ServerManager.StartConnection();
-                    _networkManager.ClientManager.StartConnection();
-                }
-
-                if (GUILayout.Button("Server only", GUILayout.Height(ButtonHeight)))
-                    _networkManager.ServerManager.StartConnection();
-
-                GUILayout.Space(8f);
-                GUILayout.Label("Address");
-                _address = GUILayout.TextField(_address);
-
-                if (GUILayout.Button("Client", GUILayout.Height(ButtonHeight)))
-                    _networkManager.ClientManager.StartConnection(_address);
-
-                return;
-            }
-
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
             // Host testing: credits to buy gear without grinding raids.
             PlayerSession session = PlayerSession.Local;
             if (serverStarted && session != null && session.State == SessionState.Hideout && session.Trading != null &&
                 GUILayout.Button("Dev: +10,000 cr", GUILayout.Height(ButtonHeight)))
                 session.Trading.ServerDevGrant(10000);
-#endif
 
-            if (PlayerCharacter.Local != null && GUILayout.Button("Resume", GUILayout.Height(ButtonHeight)))
-                CursorController.SetLocked(true);
-
-            if (GUILayout.Button("Disconnect", GUILayout.Height(ButtonHeight)))
-            {
-                if (clientStarted) _networkManager.ClientManager.StopConnection();
-                if (serverStarted) _networkManager.ServerManager.StopConnection(true);
-            }
+            GUILayout.EndVertical();
+            GUILayout.EndArea();
         }
 
         private static void DrawHealth(Rect rect)
@@ -115,5 +67,6 @@ namespace ExtractionShooter.UI.Debugging
                 : "Dead - returning to the hideout...";
             GUI.Label(rect, text);
         }
+#endif
     }
 }

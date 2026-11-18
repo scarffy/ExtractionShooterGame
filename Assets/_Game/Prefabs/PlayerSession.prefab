@@ -1,5 +1,76 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &248775342042074261
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 566997607888172018}
+  - component: {fileID: 541937724046298082}
+  - component: {fileID: 218784678793922292}
+  - component: {fileID: 7301442087190330211}
+  - component: {fileID: 734350510546958222}
+  - component: {fileID: 816999792967162708}
+  m_Layer: 0
+  m_Name: PlayerSession
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &566997607888172018
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 248775342042074261}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 373239471977610514}
+  - {fileID: 321029308652941236}
+  - {fileID: 444022149616499016}
+  - {fileID: 825804121522295237}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &541937724046298082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 248775342042074261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <AssetPathHash>k__BackingField: 4023891230933461805
+--- !u!114 &218784678793922292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 248775342042074261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52dc1515e4fe486b8c6ce9dabb075c5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _stash: {fileID: 506331761247246142}
+  _loadout: {fileID: 853862815255778892}
+  _pockets: {fileID: 683368142432721113}
+  _safeBox: {fileID: 913293862285741879}
+  _starterMelee: {fileID: 11400000, guid: 447a552639b944439e9490f53a85b496, type: 2}
+  _starterKit: {fileID: 11400000, guid: 627d332d2ef34b229c2de1378aac708b, type: 2}
 --- !u!1 &221103666033059249
 GameObject:
   m_ObjectHideFlags: 0
@@ -44,9 +115,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 538b2109c1124a83baa93c2f0ee8526a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 541937724046298082}
-  _networkObjectCache: {fileID: 0}
   _displayName: Pockets
   _capacity: 5
   _gridWidth: 5
@@ -54,154 +122,6 @@ MonoBehaviour:
   _slotRules: 3
   _accessRange: 3
   _itemDatabase: {fileID: 11400000, guid: 15d7f319f1c14e948b3f5a0f01398544, type: 2}
---- !u!1 &248775342042074261
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 566997607888172018}
-  - component: {fileID: 541937724046298082}
-  - component: {fileID: 218784678793922292}
-  - component: {fileID: 7301442087190330211}
-  - component: {fileID: 734350510546958222}
-  m_Layer: 0
-  m_Name: PlayerSession
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &566997607888172018
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 248775342042074261}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 373239471977610514}
-  - {fileID: 321029308652941236}
-  - {fileID: 444022149616499016}
-  - {fileID: 825804121522295237}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &541937724046298082
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 248775342042074261}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _localLevelOfDetailCalculationType: 0
-  _useLevelOfDetail: 0
-  _useRootLevelOfDetail: 1
-  NetworkObserver: {fileID: 0}
-  _enablePrediction: 0
-  _predictionType: 0
-  _localReconcileCorrectionType: 2
-  _graphicalObject: {fileID: 0}
-  _detachGraphicalObject: 0
-  _enableStateForwarding: 1
-  _networkTransform: {fileID: 0}
-  _ownerInterpolation: 1
-  _ownerSmoothedProperties: 255
-  _adaptiveInterpolation: 3
-  _spectatorSmoothedProperties: 255
-  _spectatorInterpolation: 2
-  _enableTeleport: 0
-  _teleportThreshold: 1
-  <PrefabId>k__BackingField: 65535
-  <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 4023891230933461805
-  SceneId: 0
-  SerializedTransformProperties:
-    Position: {x: 0, y: 0, z: 0}
-    Rotation: {x: 0, y: 0, z: 0, w: 0}
-    Scale: {x: 0, y: 0, z: 0}
-    IsValid: 0
-  <IsNested>k__BackingField: 0
-  WasActiveDuringEdit: 0
-  WasActiveDuringEdit_Set1: 1
-  <ComponentIndex>k__BackingField: 0
-  <PredictedSpawn>k__BackingField: {fileID: 0}
-  <PredictedOwner>k__BackingField: {fileID: 0}
-  NetworkBehaviours: []
-  InitializedParentNetworkBehaviour: {fileID: 0}
-  InitializedNestedNetworkObjects: []
-  RuntimeParentNetworkBehaviour: {fileID: 0}
-  RuntimeChildNetworkBehaviours: []
-  _isNetworked: 1
-  _isSpawnable: 1
-  _isGlobal: 0
-  _initializeOrder: 0
-  _preventDespawnOnDisconnect: 0
-  _defaultDespawnType: 0
-  _initializedTimestamp: 0
---- !u!114 &218784678793922292
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 248775342042074261}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 52dc1515e4fe486b8c6ce9dabb075c5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 541937724046298082}
-  _networkObjectCache: {fileID: 0}
-  _stash: {fileID: 506331761247246142}
-  _loadout: {fileID: 853862815255778892}
-  _pockets: {fileID: 683368142432721113}
-  _safeBox: {fileID: 913293862285741879}
-  _starterMelee: {fileID: 11400000, guid: 447a552639b944439e9490f53a85b496, type: 2}
-  _starterKit: {fileID: 11400000, guid: 627d332d2ef34b229c2de1378aac708b, type: 2}
---- !u!114 &7301442087190330211
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 248775342042074261}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab1a55108c184db184d9963e020a6e57, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 541937724046298082}
-  _networkObjectCache: {fileID: 0}
-  _trader: {fileID: 11400000, guid: 9738268fd89f478ca52fd264a8488e29, type: 2}
---- !u!114 &734350510546958222
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 248775342042074261}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 545a61d6b1cf4083b77327062d2ebcb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 541937724046298082}
-  _networkObjectCache: {fileID: 0}
 --- !u!1 &399763501503883758
 GameObject:
   m_ObjectHideFlags: 0
@@ -246,14 +166,100 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 538b2109c1124a83baa93c2f0ee8526a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 541937724046298082}
-  _networkObjectCache: {fileID: 0}
   _displayName: Safe Box
   _capacity: 2
   _gridWidth: 2
   _access: 0
   _slotRules: 2
+  _accessRange: 3
+  _itemDatabase: {fileID: 11400000, guid: 15d7f319f1c14e948b3f5a0f01398544, type: 2}
+--- !u!114 &7301442087190330211
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 248775342042074261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab1a55108c184db184d9963e020a6e57, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _trader: {fileID: 11400000, guid: 9738268fd89f478ca52fd264a8488e29, type: 2}
+--- !u!114 &734350510546958222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 248775342042074261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 545a61d6b1cf4083b77327062d2ebcb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &816999792967162708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 248775342042074261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e139dfe7a2934cc899170738598bf530, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _hideout: {fileID: 11400000, guid: c9c384921a2641638a7ec824a37e2085, type: 2}
+--- !u!1 &730624755527211866
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 373239471977610514}
+  - component: {fileID: 506331761247246142}
+  m_Layer: 0
+  m_Name: Stash
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &373239471977610514
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 730624755527211866}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 566997607888172018}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &506331761247246142
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 730624755527211866}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 538b2109c1124a83baa93c2f0ee8526a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _displayName: Stash
+  _capacity: 120
+  _gridWidth: 10
+  _access: 0
+  _slotRules: 0
   _accessRange: 3
   _itemDatabase: {fileID: 11400000, guid: 15d7f319f1c14e948b3f5a0f01398544, type: 2}
 --- !u!1 &517506474133718060
@@ -300,67 +306,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 538b2109c1124a83baa93c2f0ee8526a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 541937724046298082}
-  _networkObjectCache: {fileID: 0}
   _displayName: Loadout
   _capacity: 8
   _gridWidth: 0
   _access: 0
   _slotRules: 1
-  _accessRange: 3
-  _itemDatabase: {fileID: 11400000, guid: 15d7f319f1c14e948b3f5a0f01398544, type: 2}
---- !u!1 &730624755527211866
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 373239471977610514}
-  - component: {fileID: 506331761247246142}
-  m_Layer: 0
-  m_Name: Stash
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &373239471977610514
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 730624755527211866}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 566997607888172018}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &506331761247246142
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 730624755527211866}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 538b2109c1124a83baa93c2f0ee8526a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 541937724046298082}
-  _networkObjectCache: {fileID: 0}
-  _displayName: Stash
-  _capacity: 120
-  _gridWidth: 10
-  _access: 0
-  _slotRules: 0
   _accessRange: 3
   _itemDatabase: {fileID: 11400000, guid: 15d7f319f1c14e948b3f5a0f01398544, type: 2}

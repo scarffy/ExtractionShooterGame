@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using ExtractionShooter.Core.Matchmaking;
 using ExtractionShooter.Core.Persistence;
+using ExtractionShooter.Core.Raid;
+using ExtractionShooter.Gameplay.Raid;
 using FishNet.Managing;
 using FishNet.Transporting;
 using UnityEngine;
@@ -18,6 +20,8 @@ namespace ExtractionShooter.Gameplay.Session
     /// <item>When squads are admitted the lobby raises <see cref="ServerRaidOpened"/> (new instance: reset the map) and
     /// <see cref="ServerSquadDeploying"/> per squad; the raid director spawns the characters.</item>
     /// <item>Any change to a searching squad (a member leaves, un-readies or disconnects) stops its search.</item>
+    /// <item>The map offers two difficulties (<see cref="MapDifficulties"/>). The leader picks one; squads only share a raid
+    /// with squads of the same difficulty, and the raid's bots and loot follow it (<see cref="ModifiersFor"/>).</item>
     /// </list>
     /// </summary>
     [DisallowMultipleComponent]
@@ -31,6 +35,13 @@ namespace ExtractionShooter.Gameplay.Session
 
         [Tooltip("Whether squadmates can hurt each other.")]
         [SerializeField] private bool _friendlyFire;
+
+        [Header("Difficulty")]
+        [Tooltip("The two difficulties this map offers: Easy/Normal or Normal/Hard.")]
+        [SerializeField] private MapDifficulties _difficulties = MapDifficulties.EasyNormal;
+
+        [Tooltip("Bot and loot changes per difficulty. Built-in values are used when empty.")]
+        [SerializeField] private RaidDifficultySettings _difficultySettings;
 
         [Header("Matchmaking")]
         [Tooltip("Most players in one raid instance.")]
@@ -49,6 +60,7 @@ namespace ExtractionShooter.Gameplay.Session
         [SerializeField, Min(10f)] private float _raidDurationSeconds = 1200f;
 
         private readonly Dictionary<int, string> _inviteNames = new Dictionary<int, string>();
+        private readonly Dictionary<int, RaidDifficulty> _soloDifficulty = new Dictionary<int, RaidDifficulty>();
         private readonly List<RaidAssignment> _admitted = new List<RaidAssignment>();
         private readonly List<PlayerSession> _members = new List<PlayerSession>();
         private SquadRoster _roster;
@@ -64,6 +76,13 @@ namespace ExtractionShooter.Gameplay.Session
         public event Action<RaidInstance, int, IReadOnlyList<PlayerSession>> ServerSquadDeploying;
 
         public bool FriendlyFire => _friendlyFire;
+
+        /// <summary>The two difficulties this map offers (the same on server and clients: it is scene data).</summary>
+        public MapDifficulties Difficulties => _difficulties;
+
+        /// <summary>What a raid at this difficulty changes (bots, loot).</summary>
+        public DifficultyModifiers ModifiersFor(RaidDifficulty difficulty) =>
+            _difficultySettings != null ? _difficultySettings.For(difficulty) : DifficultyModifiers.DefaultFor(difficulty);
 
         /// <summary>Server: the raid instance running now, or null.</summary>
         public RaidInstance ActiveRaid => _matchmaking != null ? _matchmaking.ActiveRaid : null;
@@ -106,6 +125,7 @@ namespace ExtractionShooter.Gameplay.Session
             _matchmaking = new MatchmakingService(new MatchmakingSettings(_maxPlayersPerRaid, _minPlayersToStart,
                 _countdownSeconds, _lateJoinSeconds, _raidDurationSeconds));
             _inviteNames.Clear();
+            _soloDifficulty.Clear();
         }
 
         // ---------------- Tick ----------------
@@ -138,7 +158,7 @@ namespace ExtractionShooter.Gameplay.Session
         {
             if (assignment.OpensRaid)
             {
-                Debug.Log($"[{nameof(SquadLobby)}] Raid #{assignment.Raid.Id} launched.");
+                Debug.Log($"[{nameof(SquadLobby)}] Raid #{assignment.Raid.Id} ({assignment.Raid.Difficulty.DisplayName()}) launched.");
                 ServerRaidOpened?.Invoke(assignment.Raid);
             }
 
@@ -169,7 +189,7 @@ namespace ExtractionShooter.Gameplay.Session
                 string invite = _roster.PendingInvite(id) != 0 && _inviteNames.TryGetValue(id, out string from) ? from : string.Empty;
                 QueueStatus queue = squad != null ? _matchmaking.GetStatus(squad.Id, now) : QueueStatus.Idle;
                 player.ServerApply(squad != null ? squad.Id : SquadRules.NoSquad, squad != null ? squad.Code : string.Empty,
-                    squad != null && squad.Leader == id, squad != null && squad.IsReady(id), invite, queue);
+                    squad != null && squad.Leader == id, squad != null && squad.IsReady(id), invite, queue, DifficultyOf(id, squad));
             }
         }
 
@@ -237,7 +257,11 @@ namespace ExtractionShooter.Gameplay.Session
                     break;
 
                 case SquadCommand.FindMatch:
-                    FindMatch(player);
+                    FindMatch(player, argument);
+                    break;
+
+                case SquadCommand.SetDifficulty:
+                    SetDifficulty(player, before, argument);
                     break;
 
                 case SquadCommand.CancelMatch:
@@ -258,6 +282,7 @@ namespace ExtractionShooter.Gameplay.Session
             StopSearchFor(squad, $"{name} disconnected.");
             _roster.Leave(id);
             _inviteNames.Remove(id);
+            _soloDifficulty.Remove(id);
         }
 
         private void Invite(PlayerSquad player, string targetName)
@@ -301,9 +326,47 @@ namespace ExtractionShooter.Gameplay.Session
             if (target != null) Broadcast(target, $"{player.Session.PlayerName} joined the squad.", player);
         }
 
-        private void FindMatch(PlayerSquad player)
+        /// <summary>The difficulty shown to a player: their squad's, or their own pick when they have no squad.</summary>
+        private RaidDifficulty DifficultyOf(int playerId, Squad squad)
+        {
+            if (squad != null) return _difficulties.Clamp(squad.Difficulty);
+            return _soloDifficulty.TryGetValue(playerId, out RaidDifficulty own) ? _difficulties.Clamp(own) : RaidDifficulty.Normal;
+        }
+
+        private void SetDifficulty(PlayerSquad player, Squad squad, string argument)
+        {
+            if (!RaidDifficulties.TryParse(argument, out RaidDifficulty difficulty)) return;
+            if (!_difficulties.Allows(difficulty))
+            {
+                player.ServerSendMessage($"This map has no {difficulty.DisplayName()} mode.");
+                return;
+            }
+
+            int id = player.ServerPlayerId;
+            if (squad == null)
+            {
+                _soloDifficulty[id] = difficulty;
+                return;
+            }
+            if (squad.Leader != id)
+            {
+                player.ServerSendMessage("Only the squad leader picks the difficulty.");
+                return;
+            }
+            if (_matchmaking.IsQueued(squad.Id))
+            {
+                player.ServerSendMessage("Cancel the search to change the difficulty.");
+                return;
+            }
+            if (squad.Difficulty == difficulty) return;
+            squad.Difficulty = difficulty;
+            Broadcast(squad, $"Difficulty: {difficulty.DisplayName()}.", player);
+        }
+
+        private void FindMatch(PlayerSquad player, string argument)
         {
             int id = player.ServerPlayerId;
+            Squad existing = _roster.SquadOf(id);
             Squad squad = _roster.Ensure(id);
             if (squad.Leader != id)
             {
@@ -311,6 +374,16 @@ namespace ExtractionShooter.Gameplay.Session
                 return;
             }
             if (_matchmaking.IsQueued(squad.Id)) return;
+
+            // The search names its difficulty (a solo player's pick lives outside the squad made for them here).
+            if (RaidDifficulties.TryParse(argument, out RaidDifficulty picked)) squad.Difficulty = picked;
+            else if (existing == null && _soloDifficulty.TryGetValue(id, out RaidDifficulty own)) squad.Difficulty = own;
+            if (!_difficulties.Allows(squad.Difficulty))
+            {
+                player.ServerSendMessage($"This map has no {squad.Difficulty.DisplayName()} mode.");
+                squad.Difficulty = _difficulties.Clamp(squad.Difficulty);
+                return;
+            }
 
             // Pressing Find match readies the leader.
             _roster.SetReady(id, true);
@@ -331,13 +404,13 @@ namespace ExtractionShooter.Gameplay.Session
                 return;
             }
 
-            if (!_matchmaking.Enqueue(squad.Id, squad.Count))
+            if (!_matchmaking.Enqueue(squad.Id, squad.Count, squad.Difficulty))
             {
                 player.ServerSendMessage($"A squad of {squad.Count} cannot be matched on this server.");
                 return;
             }
             squad.Locked = true;
-            Broadcast(squad, "Searching for a raid…");
+            Broadcast(squad, $"Searching for a {squad.Difficulty.DisplayName()} raid…");
         }
 
         /// <summary>Takes a searching squad out of the queue and tells its members why. No-op if it is not searching.</summary>

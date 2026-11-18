@@ -1,0 +1,419 @@
+/* Main menu, pause menu, settings and confirm box (GameMenu). Same palette as InventoryScreen.uss:
+   near-black panels, warm off-white text, amber accent, olive action buttons. */
+
+.hidden {
+    display: none;
+}
+
+.menu-root {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.menu-screen {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-screen--overlay {
+    background-color: rgba(6, 8, 10, 0.82);
+}
+
+.menu-screen--modal {
+    background-color: rgba(4, 5, 6, 0.7);
+}
+
+/* ---------- Main menu ---------- */
+
+.main-menu {
+    background-color: rgb(12, 14, 17);
+    align-items: flex-start;
+    padding-left: 160px;
+    border-left-width: 6px;
+    border-left-color: rgb(230, 190, 90);
+}
+
+.main-menu__column {
+    width: 560px;
+}
+
+.menu-title {
+    color: rgb(240, 236, 220);
+    font-size: 72px;
+    -unity-font-style: bold;
+    letter-spacing: 12px;
+}
+
+.menu-subtitle {
+    margin: 0 0 28px 4px;
+    color: rgb(230, 190, 90);
+    font-size: 18px;
+    -unity-font-style: bold;
+    letter-spacing: 6px;
+}
+
+.menu-panel {
+    padding: 22px 24px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.12);
+    background-color: rgba(22, 26, 30, 0.97);
+}
+
+.menu-buttons {
+    margin-top: 6px;
+}
+
+.menu-section-label {
+    margin: 18px 0 2px 0;
+    color: rgba(230, 225, 210, 0.55);
+    font-size: 13px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+}
+
+.menu-join-row {
+    flex-direction: row;
+}
+
+.menu-field {
+    margin: 8px 0 0 0;
+    font-size: 16px;
+}
+
+.menu-field--address {
+    flex-grow: 1;
+    margin-right: 12px;
+}
+
+.menu-field--port {
+    width: 170px;
+}
+
+/* Two classes, so it wins over the generic .menu-field label width below. */
+.menu-field.menu-field--port .unity-base-field__label {
+    min-width: 50px;
+    width: 50px;
+}
+
+.menu-field.menu-field--port .unity-base-text-field__input {
+    min-width: 90px;
+}
+
+.menu-field .unity-base-field__label {
+    min-width: 120px;
+    color: rgba(230, 225, 210, 0.75);
+    -unity-text-align: middle-left;
+}
+
+.menu-field .unity-base-text-field__input {
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.16);
+    background-color: rgb(12, 14, 17);
+    color: rgb(240, 236, 220);
+}
+
+.menu-divider {
+    height: 1px;
+    margin: 18px 0 6px 0;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menu-status {
+    margin-top: 16px;
+}
+
+.menu-status__label {
+    color: rgb(230, 190, 90);
+    font-size: 17px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.menu-error {
+    min-height: 20px;
+    margin-top: 12px;
+    color: rgb(240, 120, 90);
+    font-size: 15px;
+    white-space: normal;
+}
+
+.menu-footnote {
+    margin: 14px 0 0 4px;
+    color: rgba(230, 225, 210, 0.35);
+    font-size: 13px;
+}
+
+/* ---------- Buttons ---------- */
+
+.menu-button {
+    height: 40px;
+    margin: 10px 0 0 0;
+    border-radius: 4px;
+    border-width: 0;
+    background-color: rgb(40, 46, 52);
+    color: rgb(240, 240, 235);
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.menu-button:hover {
+    background-color: rgb(56, 64, 72);
+}
+
+.menu-button:active {
+    background-color: rgb(32, 37, 42);
+}
+
+.menu-button--primary {
+    background-color: rgb(70, 86, 52);
+}
+
+.menu-button--primary:hover {
+    background-color: rgb(88, 108, 64);
+}
+
+.menu-button--primary:active {
+    background-color: rgb(58, 72, 44);
+}
+
+.menu-button--danger {
+    background-color: rgb(120, 60, 50);
+}
+
+.menu-button--danger:hover {
+    background-color: rgb(140, 72, 60);
+}
+
+.menu-button--quiet {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: rgba(230, 225, 210, 0.8);
+}
+
+.menu-button--quiet:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.menu-button--dev {
+    height: 30px;
+    background-color: rgb(46, 40, 60);
+    color: rgba(230, 225, 210, 0.75);
+    font-size: 13px;
+}
+
+/* ---------- Pause / confirm ---------- */
+
+.menu-heading {
+    color: rgb(240, 236, 220);
+    font-size: 28px;
+    -unity-font-style: bold;
+    letter-spacing: 4px;
+}
+
+.menu-note {
+    margin: 4px 0 6px 0;
+    color: rgba(230, 225, 210, 0.55);
+    font-size: 14px;
+    white-space: normal;
+}
+
+.pause-panel {
+    width: 380px;
+}
+
+.pause-context {
+    margin-bottom: 10px;
+    color: rgb(230, 190, 90);
+}
+
+.confirm-panel {
+    width: 480px;
+    border-color: rgba(240, 120, 90, 0.5);
+}
+
+.confirm-message {
+    margin: 12px 0 8px 0;
+    color: rgb(230, 225, 210);
+    font-size: 16px;
+    white-space: normal;
+}
+
+.confirm-buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.confirm-buttons .menu-button {
+    min-width: 140px;
+    margin-left: 12px;
+    padding: 0 18px;
+}
+
+/* ---------- Settings ---------- */
+
+.settings-panel {
+    width: 900px;
+    height: 820px;
+}
+
+.settings-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.settings-tabs {
+    flex-direction: row;
+}
+
+.menu-tab {
+    height: 34px;
+    margin: 0 0 0 12px;
+    padding: 0 18px;
+    border-radius: 4px;
+    border-width: 0;
+    background-color: rgb(40, 46, 52);
+    color: rgba(230, 225, 210, 0.7);
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.menu-tab:hover {
+    background-color: rgb(56, 64, 72);
+}
+
+.menu-tab--active {
+    background-color: rgb(230, 190, 90);
+    color: rgb(22, 26, 30);
+}
+
+.menu-tab--active:hover {
+    background-color: rgb(240, 204, 110);
+}
+
+.settings-page {
+    flex-grow: 1;
+    padding-right: 8px;
+}
+
+.settings-section {
+    margin: 16px 0 6px 0;
+    color: rgb(230, 190, 90);
+    font-size: 15px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+}
+
+.settings-row {
+    min-height: 34px;
+    margin: 4px 0;
+    font-size: 15px;
+}
+
+.settings-row .unity-base-field__label {
+    min-width: 260px;
+    color: rgb(230, 225, 210);
+    -unity-text-align: middle-left;
+}
+
+.settings-row .unity-base-text-field__input {
+    width: 70px;
+    background-color: rgb(12, 14, 17);
+    border-color: rgba(255, 255, 255, 0.16);
+    color: rgb(240, 236, 220);
+}
+
+.settings-row .unity-base-popup-field__input {
+    height: 30px;
+    border-radius: 4px;
+    border-color: rgba(255, 255, 255, 0.16);
+    background-color: rgb(12, 14, 17);
+    color: rgb(240, 236, 220);
+}
+
+.settings-row .unity-base-slider__tracker {
+    background-color: rgb(46, 52, 58);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.settings-row .unity-base-slider__dragger {
+    background-color: rgb(230, 190, 90);
+    border-color: rgb(230, 190, 90);
+}
+
+.settings-row .unity-toggle__checkmark {
+    background-color: rgb(12, 14, 17);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.settings-footer {
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.settings-footer .menu-button {
+    min-width: 180px;
+    padding: 0 18px;
+}
+
+/* ---------- Key bindings ---------- */
+
+.binding-list {
+    margin-bottom: 12px;
+}
+
+.binding-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 36px;
+    padding: 0 6px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.binding-row__label {
+    width: 300px;
+    color: rgb(230, 225, 210);
+    font-size: 15px;
+}
+
+.binding-key {
+    min-width: 130px;
+    height: 30px;
+    margin: 0 10px 0 0;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.16);
+    background-color: rgb(12, 14, 17);
+    color: rgb(240, 236, 220);
+    font-size: 15px;
+    -unity-font-style: bold;
+}
+
+.binding-key:hover {
+    border-color: rgb(230, 190, 90);
+}
+
+.binding-key--listening {
+    border-color: rgb(230, 190, 90);
+    background-color: rgb(60, 52, 30);
+    color: rgb(240, 204, 110);
+}
+
+.binding-key--conflict {
+    border-color: rgb(240, 120, 90);
+    color: rgb(240, 150, 120);
+}

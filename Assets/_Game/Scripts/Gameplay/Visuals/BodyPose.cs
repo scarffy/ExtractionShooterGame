@@ -1,3 +1,4 @@
+using ExtractionShooter.Core.Combat;
 using UnityEngine;
 
 namespace ExtractionShooter.Gameplay.Visuals
@@ -25,6 +26,15 @@ namespace ExtractionShooter.Gameplay.Visuals
 
         /// <summary>Hands busy (reloading, treating a wound): weapon lowered.</summary>
         public bool Lowered;
+
+        /// <summary>The medical item in the free hand while healing (None otherwise).</summary>
+        public UseItemVisual UseItem;
+
+        /// <summary>Seconds since the current use started (animation time).</summary>
+        public float UseSeconds;
+
+        /// <summary>Use progress 0..1 when known (the owner); others pass an estimate.</summary>
+        public float UseProgress;
     }
 
     /// <summary>How a body is drawn.</summary>

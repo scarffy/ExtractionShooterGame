@@ -136,6 +136,9 @@ namespace ExtractionShooter.Gameplay.Player
             public bool CycleWeaponPressed => false;
             public bool ThrowPressed => false;
             public bool CycleThrowablePressed => false;
+            public bool PingPressed => false;
+            public bool QuickHealPressed => false;
+            public bool CancelUsePressed => false;
             public bool SingleItemModifierHeld => false;
         }
     }

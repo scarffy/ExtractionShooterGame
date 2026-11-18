@@ -124,6 +124,7 @@ namespace ExtractionShooter.UI.Hideout
             if (icon != null)
                 icon.style.backgroundImage = item != null && item.Icon != null ? new StyleBackground(item.Icon) : new StyleBackground(StyleKeyword.None);
             if (item != null) cell.AddToClassList(CategoryClassPrefix + item.Category.ToString().ToLowerInvariant());
+            RarityStyle.Apply(cell, item);
         }
 
         private string OfferDetails(int index)
@@ -132,8 +133,8 @@ namespace ExtractionShooter.UI.Hideout
             if (trader == null || !trader.TryGetOffer(index, out TraderOffer offer)) return string.Empty;
 
             ItemDefinition item = offer.Item;
-            // What arrives in the stash: new armor at full durability, weapons unloaded.
-            int durability = item is ArmorDefinition armor ? armor.MaxDurability : 0;
+            // What arrives in the stash: new armor at full durability, keys with every use, weapons unloaded.
+            int durability = item is ArmorDefinition armor ? armor.MaxDurability : item is KeyDefinition key ? key.MaxUses : 0;
             string stats = ItemText.Details(item, new ItemStack(item.Id, offer.Quantity, durability), _itemDatabase);
             return $"{stats}   ·   Buy {PlayerTrading.FormatCredits(trader.BuyPrice(offer))} (click)";
         }
@@ -170,7 +171,8 @@ namespace ExtractionShooter.UI.Hideout
             {
                 case Filter.Weapons: return item.Category == ItemCategory.Weapon || item.Category == ItemCategory.Attachment;
                 case Filter.Ammo: return item.Category == ItemCategory.Ammo;
-                case Filter.Gear: return item.Category == ItemCategory.Armor || item.Category == ItemCategory.Throwable || item is ContainerItemDefinition;
+                case Filter.Gear: return item.Category == ItemCategory.Armor || item.Category == ItemCategory.Throwable ||
+                                         item.Category == ItemCategory.Key || item is ContainerItemDefinition;
                 case Filter.Medical: return item.Category == ItemCategory.Medical;
                 default: return true;
             }

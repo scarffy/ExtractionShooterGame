@@ -13,6 +13,7 @@ namespace ExtractionShooter.UI.Hideout
         private const string Hidden = "hidden";
 
         private readonly VisualElement _root;
+        private readonly Label _caption;
         private readonly Label _result;
         private readonly Label _time;
         private readonly Label _playerKills;
@@ -30,6 +31,7 @@ namespace ExtractionShooter.UI.Hideout
         {
             _root = root;
             if (_root == null) return;
+            _caption = root.Q<Label>("raid-summary-caption");
             _result = root.Q<Label>("raid-summary-result");
             _time = root.Q<Label>("raid-summary-time");
             _playerKills = root.Q<Label>("raid-summary-player-kills");
@@ -49,6 +51,7 @@ namespace ExtractionShooter.UI.Hideout
             if (_root == null) return;
 
             bool success = summary.Result == RaidResult.Extracted;
+            Set(_caption, $"RAID SUMMARY  ·  {summary.Difficulty.DisplayName().ToUpperInvariant()}");
             Set(_result, summary.ResultText);
             _result?.EnableInClassList("raid-summary__result--success", success);
             _result?.EnableInClassList("raid-summary__result--failed", !success);

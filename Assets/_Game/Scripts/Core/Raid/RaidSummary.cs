@@ -17,6 +17,7 @@ namespace ExtractionShooter.Core.Raid
     public struct RaidSummary
     {
         public RaidResult Result;
+        public RaidDifficulty Difficulty;
         public int Seconds;
         public int PlayerKills;
         public int BotKills;

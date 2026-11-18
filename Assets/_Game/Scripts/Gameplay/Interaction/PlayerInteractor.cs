@@ -8,6 +8,7 @@ namespace ExtractionShooter.Gameplay.Interaction
     /// <summary>
     /// Owner only: finds the <see cref="IInteractable"/> under the crosshair and uses it on Interact.
     /// Purely a client convenience; every resulting action is validated by the server.
+    /// Also carries the owner's requests to server-owned world objects that have no inventory route (doors).
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCharacter))]
@@ -48,6 +49,19 @@ namespace ExtractionShooter.Gameplay.Interaction
 
             if (_target != null && _character.Input.InteractPressed)
                 _target.Interact(_character);
+        }
+
+        /// <summary>Owner: asks the server to open a door, using up one use of a carried key if it is locked.</summary>
+        public void RequestOpenDoor(LockedDoor door)
+        {
+            if (IsOwner && door != null) ServerOpenDoor(door);
+        }
+
+        [ServerRpc]
+        private void ServerOpenDoor(LockedDoor door)
+        {
+            // The door checks reach, the player being alive and the key itself.
+            if (door != null && door.IsSpawned) door.ServerTryOpen(_character);
         }
 
         private IInteractable FindTarget()

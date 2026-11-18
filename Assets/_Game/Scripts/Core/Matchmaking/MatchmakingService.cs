@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ExtractionShooter.Core.Raid;
 
 namespace ExtractionShooter.Core.Matchmaking
 {
@@ -76,6 +77,9 @@ namespace ExtractionShooter.Core.Matchmaking
     /// starts; the raid launches when it ends, or at once when the raid is full.</item>
     /// <item>While a raid runs, queued squads join it during its late-join window if they fit; otherwise they wait for the
     /// raid to close (time up, or everyone out) and form the next one.</item>
+    /// <item>Each squad queues for one difficulty and only shares a raid with squads of the same difficulty. The next raid
+    /// takes the difficulty of the squad at the head of the queue; squads queued for another difficulty keep their places
+    /// and wait for a raid of theirs.</item>
     /// </list>
     /// </summary>
     public sealed class MatchmakingService
@@ -108,12 +112,19 @@ namespace ExtractionShooter.Core.Matchmaking
         /// <summary>When the launch countdown ends, or null when none is running.</summary>
         public double? CountdownEndsAt => _countdownEndsAt;
 
-        /// <summary>Queues a squad. Refused when already queued or when its size is not 1..MaxPlayers.</summary>
-        public bool Enqueue(int squadId, int size)
+        /// <summary>Queues a squad for a difficulty. Refused when already queued or when its size is not 1..MaxPlayers.</summary>
+        public bool Enqueue(int squadId, int size, RaidDifficulty difficulty = RaidDifficulty.Normal)
         {
             if (size < 1 || size > Settings.MaxPlayers || IndexOf(squadId) >= 0) return false;
-            _queue.Add(new Entry(squadId, size));
+            _queue.Add(new Entry(squadId, size, difficulty));
             return true;
+        }
+
+        /// <summary>The difficulty a squad is queued for, or null when it is not queued.</summary>
+        public RaidDifficulty? QueuedDifficulty(int squadId)
+        {
+            int index = IndexOf(squadId);
+            return index < 0 ? (RaidDifficulty?)null : _queue[index].Difficulty;
         }
 
         /// <summary>Takes a squad out of the queue. False when it was not queued.</summary>
@@ -149,7 +160,7 @@ namespace ExtractionShooter.Core.Matchmaking
 
                 for (int i = 0; i < _queue.Count && raid.FreePlaces > 0; i++)
                 {
-                    if (_queue[i].Size > raid.FreePlaces) continue;
+                    if (_queue[i].Size > raid.FreePlaces || _queue[i].Difficulty != raid.Difficulty) continue;
                     Entry entry = _queue[i];
                     _queue.RemoveAt(i--);
                     raid.Admit(entry.SquadId, entry.Size);
@@ -168,7 +179,8 @@ namespace ExtractionShooter.Core.Matchmaking
             if (_countdownEndsAt == null) _countdownEndsAt = now + Settings.CountdownSeconds;
             if (packed < Settings.MaxPlayers && now < _countdownEndsAt.Value) return _assignments;
 
-            raid = new RaidInstance(_nextRaidId++, now, Settings.RaidDurationSeconds, Settings.MaxPlayers, Settings.LateJoinSeconds);
+            raid = new RaidInstance(_nextRaidId++, now, Settings.RaidDurationSeconds, Settings.MaxPlayers, Settings.LateJoinSeconds,
+                _queue[_pack[0]].Difficulty);
             ActiveRaid = raid;
             _countdownEndsAt = null;
             _playersInRaid = 0;
@@ -195,6 +207,7 @@ namespace ExtractionShooter.Core.Matchmaking
             if (raid != null)
                 return new QueueStatus(MatchmakingPhase.WaitingForRaid, raid.PlayerCount, capacity,
                     Seconds(raid.EndTime - now), index + 1);
+            // (A squad of the running raid's difficulty that fits is admitted by Tick before anyone asks.)
 
             int packed = BuildPack();
             if (!_pack.Contains(index))
@@ -217,14 +230,19 @@ namespace ExtractionShooter.Core.Matchmaking
             return _playersInRaid == 0 && now >= raid.StartTime + EmptyCloseGraceSeconds;
         }
 
-        /// <summary>First-fit in queue order up to capacity; fills <see cref="_pack"/> with queue indices and returns the player total.</summary>
+        /// <summary>
+        /// First-fit in queue order up to capacity, among squads of the head squad's difficulty; fills <see cref="_pack"/>
+        /// with queue indices and returns the player total.
+        /// </summary>
         private int BuildPack()
         {
             _pack.Clear();
+            if (_queue.Count == 0) return 0;
+            RaidDifficulty difficulty = _queue[0].Difficulty;
             int total = 0;
             for (int i = 0; i < _queue.Count && total < Settings.MaxPlayers; i++)
             {
-                if (total + _queue[i].Size > Settings.MaxPlayers) continue;
+                if (_queue[i].Difficulty != difficulty || total + _queue[i].Size > Settings.MaxPlayers) continue;
                 _pack.Add(i);
                 total += _queue[i].Size;
             }
@@ -242,14 +260,16 @@ namespace ExtractionShooter.Core.Matchmaking
 
         private readonly struct Entry
         {
-            public Entry(int squadId, int size)
+            public Entry(int squadId, int size, RaidDifficulty difficulty)
             {
                 SquadId = squadId;
                 Size = size;
+                Difficulty = difficulty;
             }
 
             public int SquadId { get; }
             public int Size { get; }
+            public RaidDifficulty Difficulty { get; }
         }
     }
 }

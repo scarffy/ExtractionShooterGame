@@ -17,6 +17,7 @@ namespace ExtractionShooter.UI.Hideout
     /// right-click a bag in the stash opens it.</item>
     /// <item>Trader: the trader's offers (left, click buys) beside the stash (click sells, Alt+click sells one).</item>
     /// <item>Squad: create / join / invite, ready up (<see cref="SquadPanel"/>) beside the stash.</item>
+    /// <item>Workbench: crafting and the gun bench (<see cref="WorkbenchPanel"/>) beside the stash.</item>
     /// </list>
     /// Credits, the matchmaking status and Find match show in the header. Shown whenever the player is not in a raid.
     /// </summary>
@@ -32,9 +33,11 @@ namespace ExtractionShooter.UI.Hideout
         private const string StashHint = "Click: stash / equip   ·   Alt+click: move one   ·   Drag: place / fit attachment   ·   Right-click: open bag / remove attachment   ·   Safe box and knife are kept on death";
         private const string TraderHint = "Click an offer: buy   ·   Click in the stash: sell   ·   Alt+click: sell one   ·   Right-click a bag: open";
         private const string SquadHint = "Invite by name or share the squad code   ·   Everyone sets Ready, then the leader presses Find match   ·   Solo: just press Find match";
+        private const string CraftingHint = "Craft: takes the materials from the stash   ·   Crafts keep running while you are away   ·   Collect puts the item in the stash";
+        private const string GunBenchHint = "Click a weapon in the stash: put it on the bench   ·   Click an attachment in the stash: fit it   ·   Save a build as a preset, Buy builds it again";
 
         /// <summary>Which hideout tab is showing.</summary>
-        private enum Tab { Stash, Trader, Squad }
+        private enum Tab { Stash, Trader, Squad, Workbench }
 
         [SerializeField] private ItemDatabase _itemDatabase;
         [SerializeField] private VisualTreeAsset _slotTemplate;
@@ -63,6 +66,10 @@ namespace ExtractionShooter.UI.Hideout
         private Button _stashTab;
         private Button _traderTab;
         private Button _squadTab;
+        private Button _workbenchTab;
+        private VisualElement _workbenchColumn;
+        private WorkbenchPanel _workbench;
+        private Button _stashUpgradeButton;
         private VisualElement _squadColumn;
         private SquadPanel _squadPanel;
         private RaidSummaryPanel _summaryPanel;
@@ -128,6 +135,9 @@ namespace ExtractionShooter.UI.Hideout
             _stashTab = root.Q<Button>("tab-stash");
             _traderTab = root.Q<Button>("tab-trader");
             _squadTab = root.Q<Button>("tab-squad");
+            _workbenchTab = root.Q<Button>("tab-workbench");
+            _workbenchColumn = root.Q<VisualElement>("workbench-column");
+            _stashUpgradeButton = root.Q<Button>("stash-upgrade-button");
             _squadColumn = root.Q<VisualElement>("squad-column");
             _characterColumn = root.Q<VisualElement>("hideout-character-column");
             _equipmentColumn = root.Q<VisualElement>("hideout-equipment-column");
@@ -140,6 +150,9 @@ namespace ExtractionShooter.UI.Hideout
 
             _drag = new InventoryDragController(_screen);
             _squadPanel = new SquadPanel(root, () => _drag.Cancel());
+            _workbench = new WorkbenchPanel(root, _itemDatabase, () => _drag.Cancel());
+            _workbench.DetailsChanged += SetDetails;
+            _workbench.ModeChanged += RefreshHint;
             _summaryPanel = new RaidSummaryPanel(root.Q<VisualElement>("raid-summary"));
             _drag.Dropped += OnDropped;
             _drag.CanFit = (held, under) => _itemDatabase != null && _itemDatabase.Fits(held.ItemId, under.ItemId);
@@ -170,6 +183,8 @@ namespace ExtractionShooter.UI.Hideout
             if (_stashTab != null) _stashTab.clicked += ShowStashTab;
             if (_traderTab != null) _traderTab.clicked += ShowTraderTab;
             if (_squadTab != null) _squadTab.clicked += ShowSquadTab;
+            if (_workbenchTab != null) _workbenchTab.clicked += ShowWorkbenchTab;
+            if (_stashUpgradeButton != null) _stashUpgradeButton.clicked += UpgradeStash;
             if (_upgradeButton != null) _upgradeButton.clicked += UpgradeSafeBox;
             if (_sortButton != null) _sortButton.clicked += SortStash;
 
@@ -186,6 +201,7 @@ namespace ExtractionShooter.UI.Hideout
             if (Time.unscaledTime < _nextTitleRefresh || _session == null || _session.State != SessionState.Hideout) return;
             _nextTitleRefresh = Time.unscaledTime + 0.25f;
             RefreshTitles();
+            _workbench?.Tick();
         }
 
         private void RefreshTitles()
@@ -217,6 +233,8 @@ namespace ExtractionShooter.UI.Hideout
             if (_stashTab != null) _stashTab.clicked -= ShowStashTab;
             if (_traderTab != null) _traderTab.clicked -= ShowTraderTab;
             if (_squadTab != null) _squadTab.clicked -= ShowSquadTab;
+            if (_workbenchTab != null) _workbenchTab.clicked -= ShowWorkbenchTab;
+            if (_stashUpgradeButton != null) _stashUpgradeButton.clicked -= UpgradeStash;
             if (_upgradeButton != null) _upgradeButton.clicked -= UpgradeSafeBox;
             if (_sortButton != null) _sortButton.clicked -= SortStash;
             if (_traderPanel != null) _traderPanel.DetailsChanged -= SetDetails;
@@ -225,6 +243,13 @@ namespace ExtractionShooter.UI.Hideout
             _squadPanel = null;
             _summaryPanel?.Dispose();
             _summaryPanel = null;
+            if (_workbench != null)
+            {
+                _workbench.DetailsChanged -= SetDetails;
+                _workbench.ModeChanged -= RefreshHint;
+            }
+            _workbench?.Dispose();
+            _workbench = null;
         }
 
         private SlotGridView CreateView(VisualElement root, string gridName, string panelName, System.Func<int, string> caption = null)
@@ -257,6 +282,11 @@ namespace ExtractionShooter.UI.Hideout
                     _session.Trading.MoneyChanged -= RefreshCredits;
                     _session.Trading.TradeCompleted -= OnTradeCompleted;
                 }
+                if (_session.Hideout != null)
+                {
+                    _session.Hideout.Changed -= RefreshStashUpgrade;
+                    _session.Hideout.Message -= OnTradeCompleted;
+                }
             }
 
             _session = session;
@@ -273,9 +303,15 @@ namespace ExtractionShooter.UI.Hideout
                     _session.Trading.MoneyChanged += RefreshCredits;
                     _session.Trading.TradeCompleted += OnTradeCompleted;
                 }
+                if (_session.Hideout != null)
+                {
+                    _session.Hideout.Changed += RefreshStashUpgrade;
+                    _session.Hideout.Message += OnTradeCompleted;
+                }
             }
             SetText(_tradeMessage, string.Empty);
             _squadPanel?.Bind(_session != null ? _session.GetComponent<PlayerSquad>() : null);
+            _workbench?.Bind(_session);
             Refresh();
         }
 
@@ -292,6 +328,7 @@ namespace ExtractionShooter.UI.Hideout
             if (!visible)
             {
                 _drag.Cancel();
+                _workbench?.SetVisible(false);
                 return;
             }
 
@@ -320,7 +357,8 @@ namespace ExtractionShooter.UI.Hideout
 
             bool trader = IsTrading;
             bool squad = _tab == Tab.Squad && _squadColumn != null;
-            bool stash = !trader && !squad;
+            bool workbench = IsWorkbench;
+            bool stash = !trader && !squad && !workbench;
             SetVisible(_characterColumn, stash);
             SetVisible(_equipmentColumn, stash);
             SetVisible(_storageColumn, stash);
@@ -328,12 +366,16 @@ namespace ExtractionShooter.UI.Hideout
             RefreshTitles();
             SetVisible(_traderColumn, trader);
             SetVisible(_squadColumn, squad);
+            SetVisible(_workbenchColumn, workbench);
+            SetVisible(_workbenchTab, _session.Hideout != null);
             SetVisible(_traderTab, _session.Trading != null);
             if (_stashTab != null) _stashTab.EnableInClassList(TabActiveClass, stash);
             if (_traderTab != null) _traderTab.EnableInClassList(TabActiveClass, trader);
             if (_squadTab != null) _squadTab.EnableInClassList(TabActiveClass, squad);
-            SetText(_hint, trader ? TraderHint : squad ? SquadHint : StashHint);
+            if (_workbenchTab != null) _workbenchTab.EnableInClassList(TabActiveClass, workbench);
+            RefreshHint();
             if (trader) _traderPanel.Bind(_session.Trading);
+            _workbench?.SetVisible(workbench);
             RefreshCredits();
         }
 
@@ -343,6 +385,7 @@ namespace ExtractionShooter.UI.Hideout
             SetText(_credits, trading != null ? PlayerTrading.FormatCredits(trading.Money) : string.Empty);
             if (trading != null && _tab == Tab.Trader) _traderPanel.Refresh();
             RefreshSafeBox();
+            RefreshStashUpgrade();
         }
 
         /// <summary>Character render and the value of everything being deployed with.</summary>
@@ -376,6 +419,27 @@ namespace ExtractionShooter.UI.Hideout
             _upgradeButton.SetEnabled(trading.Money >= next.Price);
         }
 
+        /// <summary>The stash header's upgrade button: next size and price, hidden at the biggest stash.</summary>
+        private void RefreshStashUpgrade()
+        {
+            if (_stashUpgradeButton == null) return;
+
+            PlayerHideout hideout = _session != null ? _session.Hideout : null;
+            bool hasNext = hideout != null && hideout.TryGetNextStash(out var next);
+            SetVisible(_stashUpgradeButton, hasNext);
+            if (!hasNext) return;
+            hideout.TryGetNextStash(out next);
+            long credits = _session.Trading != null ? _session.Trading.Money : 0;
+            _stashUpgradeButton.text = $"Upgrade to {next.Cells}  ·  {PlayerTrading.FormatCredits(next.Price)}";
+            _stashUpgradeButton.SetEnabled(credits >= next.Price);
+        }
+
+        private void UpgradeStash()
+        {
+            _drag.Cancel();
+            if (_session != null && _session.Hideout != null) _session.Hideout.RequestUpgradeStash();
+        }
+
         private void UpgradeSafeBox()
         {
             _drag.Cancel();
@@ -397,6 +461,16 @@ namespace ExtractionShooter.UI.Hideout
         private void ShowTraderTab() => SetTab(Tab.Trader);
 
         private void ShowSquadTab() => SetTab(Tab.Squad);
+
+        private void ShowWorkbenchTab() => SetTab(Tab.Workbench);
+
+        private void RefreshHint()
+        {
+            if (IsTrading) SetText(_hint, TraderHint);
+            else if (_tab == Tab.Squad && _squadColumn != null) SetText(_hint, SquadHint);
+            else if (IsWorkbench) SetText(_hint, _workbench.IsGunBenchMode ? GunBenchHint : CraftingHint);
+            else SetText(_hint, StashHint);
+        }
 
         private void SetTab(Tab tab)
         {
@@ -447,6 +521,13 @@ namespace ExtractionShooter.UI.Hideout
             // The click's own modifier, or the keyboard state (runtime UI events may not report modifiers).
             bool moveOne = single || ModifierKeys.SingleItemHeld;
 
+            // Workbench: the gun bench takes weapons and attachments; other clicks would move items into the hidden loadout.
+            if (IsWorkbench)
+            {
+                _workbench.HandleStashClick(source, slot);
+                return;
+            }
+
             if (IsTrading && (source == _session.Stash || source == _session.OpenBag))
                 _session.Trading.RequestSell(source, slot, moveOne ? 1 : 0);
             else
@@ -468,6 +549,8 @@ namespace ExtractionShooter.UI.Hideout
         }
 
         private bool IsTrading => _tab == Tab.Trader && _session != null && _session.Trading != null;
+
+        private bool IsWorkbench => _tab == Tab.Workbench && _session != null && _session.Hideout != null && _workbenchColumn != null;
 
         private void ShowDetails(ItemStack stack)
         {

@@ -65,6 +65,10 @@ namespace ExtractionShooter.Gameplay.Audio
 
         private void Update()
         {
+            // The player's effects volume (settings), applied to every one-shot these sources play.
+            _gunSource.volume = SoundVolumes.Effects;
+            _bodySource.volume = SoundVolumes.Effects;
+
             Vector3 position = transform.position;
             Vector3 delta = position - _lastPosition;
             _lastPosition = position;

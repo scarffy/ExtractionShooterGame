@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e411eb0a984048c49ca1805814563683, type: 3}
+  m_Name: Recipe_545BS
+  m_EditorClassIdentifier:
+  _recipeId: ammo_545_bs
+  _displayName: 
+  _inputs: 
+  - _item: {fileID: 11400000, guid: 5078a59d28c746ef94dd9fdc93aa6197, type: 2}
+    _quantity: 60
+  - _item: {fileID: 11400000, guid: 37fb1b178a5a4becb11c1fb31beb3a73, type: 2}
+    _quantity: 1
+  _output: {fileID: 11400000, guid: 8334b60a116c42f280130b57744776cc, type: 2}
+  _outputQuantity: 60
+  _craftSeconds: 600
+  _creditCost: 250

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using ExtractionShooter.Gameplay.AI;
 using ExtractionShooter.Core.Matchmaking;
+using ExtractionShooter.Core.Raid;
 using ExtractionShooter.Gameplay.Player;
 using ExtractionShooter.Gameplay.Session;
 using FishNet.Managing;
@@ -11,9 +12,10 @@ using UnityEngine;
 namespace ExtractionShooter.Networking
 {
     /// <summary>
-    /// Server only: builds the NavMesh when the server starts, then keeps up to <see cref="_maxBots"/> bots
-    /// alive. A dead bot is replaced after <see cref="_respawnSeconds"/>, at a spawn point no player is near.
-    /// Every raid instance after the first starts with a fresh set of bots.
+    /// Server only: builds the NavMesh when the server starts. Each raid instance starts with a fresh set of bots sized
+    /// and sharpened for its difficulty (<see cref="SquadLobby.ModifiersFor"/>), and the set is kept full: a dead bot is
+    /// replaced after <see cref="_respawnSeconds"/>, at a spawn point no player is near.
+    /// Without a lobby, <see cref="_maxBots"/> Normal bots spawn when the server starts.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class BotSpawner : MonoBehaviour
@@ -27,6 +29,7 @@ namespace ExtractionShooter.Networking
         [Tooltip("Spawn points. Uses this object's children if empty.")]
         [SerializeField] private Transform[] _spawnPoints;
 
+        [Tooltip("Bots alive at once on Normal; easier and harder raids scale this.")]
         [SerializeField, Min(0)] private int _maxBots = 6;
         [SerializeField, Min(0f)] private float _respawnSeconds = 45f;
 
@@ -37,6 +40,8 @@ namespace ExtractionShooter.Networking
         [SerializeField] private SquadLobby _lobby;
 
         private readonly List<BotBrain> _bots = new List<BotBrain>();
+        private DifficultyModifiers _difficulty = DifficultyModifiers.Neutral;
+        private int _targetBots;
         private bool _running;
         private float _nextSpawnAt;
         private int _nextPoint;
@@ -70,16 +75,20 @@ namespace ExtractionShooter.Networking
             if (_lobby != null) _lobby.ServerRaidOpened -= HandleRaidOpened;
         }
 
-        /// <summary>A new raid instance: despawn the previous instance's bots and spawn a full set (the first raid uses the start-up set).</summary>
+        /// <summary>A new raid instance: despawn the previous instance's bots and spawn a full set for its difficulty.</summary>
         private void HandleRaidOpened(RaidInstance raid)
         {
-            if (!_running || raid == null || raid.Id <= 1) return;
+            if (!_running || raid == null) return;
 
             foreach (BotBrain bot in _bots)
                 if (bot != null && bot.IsSpawned) _networkManager.ServerManager.Despawn(bot.NetworkObject);
             _bots.Clear();
-            for (int i = 0; i < _maxBots; i++) TrySpawnBot();
+
+            _difficulty = _lobby != null ? _lobby.ModifiersFor(raid.Difficulty) : DifficultyModifiers.Neutral;
+            _targetBots = _difficulty.BotCount(_maxBots);
+            for (int i = 0; i < _targetBots; i++) TrySpawnBot();
             _nextSpawnAt = Time.time + _respawnSeconds;
+            Debug.Log($"[{nameof(BotSpawner)}] Raid #{raid.Id} ({raid.Difficulty.DisplayName()}): {_bots.Count}/{_targetBots} bots.");
         }
 
         private void HandleServerConnectionState(ServerConnectionStateArgs args)
@@ -94,7 +103,10 @@ namespace ExtractionShooter.Networking
 
             if (_navMesh != null) _navMesh.BuildNavMesh();
             _running = true;
-            for (int i = 0; i < _maxBots; i++) TrySpawnBot();
+            // With a lobby, bots arrive with each raid (their number and skill depend on its difficulty).
+            _difficulty = DifficultyModifiers.Neutral;
+            _targetBots = _lobby != null ? 0 : _maxBots;
+            for (int i = 0; i < _targetBots; i++) TrySpawnBot();
             _nextSpawnAt = Time.time + _respawnSeconds;
         }
 
@@ -103,7 +115,7 @@ namespace ExtractionShooter.Networking
             if (!_running) return;
 
             _bots.RemoveAll(bot => bot == null || !bot.IsSpawned);
-            if (_bots.Count >= _maxBots)
+            if (_bots.Count >= _targetBots)
             {
                 _nextSpawnAt = Time.time + _respawnSeconds;
                 return;
@@ -124,6 +136,7 @@ namespace ExtractionShooter.Networking
                 if (point == null || IsNearPlayer(point.position)) continue;
 
                 BotBrain bot = Instantiate(_botPrefab, point.position, point.rotation);
+                bot.ServerApplyDifficulty(_difficulty);
                 _networkManager.ServerManager.Spawn(bot.NetworkObject);
                 _bots.Add(bot);
                 return true;

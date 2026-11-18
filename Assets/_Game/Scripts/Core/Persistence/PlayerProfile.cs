@@ -11,8 +11,8 @@ namespace ExtractionShooter.Core.Persistence
     [Serializable]
     public sealed class PlayerProfile
     {
-        /// <summary>2 added <see cref="Money"/>.</summary>
-        public const int CurrentVersion = 2;
+        /// <summary>2 added <see cref="Money"/>; 3 added <see cref="StashTier"/>, <see cref="Crafts"/> and <see cref="Presets"/>.</summary>
+        public const int CurrentVersion = 3;
 
         public int Version = CurrentVersion;
         public string PlayerName;
@@ -31,6 +31,15 @@ namespace ExtractionShooter.Core.Persistence
         /// <summary>Index into the trader's safe box sizes; 0 is the free box.</summary>
         public int SafeBoxTier;
         public List<StoredContainer> Bags = new List<StoredContainer>();
+
+        /// <summary>Bought stash size level; 0 is the starting stash. Profiles saved before version 3 load with 0.</summary>
+        public int StashTier;
+
+        /// <summary>Workbench crafts in progress or waiting to be collected. Null or missing in old profiles.</summary>
+        public List<StoredCraft> Crafts = new List<StoredCraft>();
+
+        /// <summary>Saved gun bench presets. Null or missing in old profiles.</summary>
+        public List<StoredPreset> Presets = new List<StoredPreset>();
 
         /// <summary>Finds the stored contents of a bag, or null.</summary>
         public StoredContainer FindBag(string key)
@@ -69,5 +78,23 @@ namespace ExtractionShooter.Core.Persistence
 
         /// <summary>Key of the bag's contents in <see cref="PlayerProfile.Bags"/>; empty for non-bags.</summary>
         public string ContentsKey;
+    }
+
+    /// <summary>A queued workbench craft: the recipe and when it started and finishes (UTC ticks).</summary>
+    [Serializable]
+    public sealed class StoredCraft
+    {
+        public string RecipeId;
+        public long StartUtcTicks;
+        public long FinishUtcTicks;
+    }
+
+    /// <summary>A saved gun bench preset: name, weapon id and attachments (WeaponMods format).</summary>
+    [Serializable]
+    public sealed class StoredPreset
+    {
+        public string Name;
+        public string WeaponId;
+        public string Attachments;
     }
 }

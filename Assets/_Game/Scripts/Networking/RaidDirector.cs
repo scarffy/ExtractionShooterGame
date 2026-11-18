@@ -49,6 +49,7 @@ namespace ExtractionShooter.Networking
         {
             public double StartedAt;
             public double EndsAt;
+            public RaidDifficulty Difficulty = RaidDifficulty.Normal;
             public long DeployedValue;
             public int PlayerKills;
             public int BotKills;
@@ -158,6 +159,7 @@ namespace ExtractionShooter.Networking
             character.Health.ServerDied += OnCharacterDied;
             character.Raid.ServerExtracted += OnCharacterExtracted;
             character.Raid.ServerSetRaidEnd(raid.EndTime);
+            character.Raid.ServerSetDifficulty(raid.Difficulty);
             SquadMember squad = character.GetComponent<SquadMember>();
             if (squad != null) squad.ServerAssign(squadId, session.PlayerName);
 
@@ -166,6 +168,7 @@ namespace ExtractionShooter.Networking
             {
                 StartedAt = Time.timeAsDouble,
                 EndsAt = raid.EndTime,
+                Difficulty = raid.Difficulty,
                 DeployedValue = CarriedValue(character),
             };
             if (session.Owner != null) _namesByClient[session.Owner.ClientId] = session.PlayerName;
@@ -268,6 +271,7 @@ namespace ExtractionShooter.Networking
             record ??= new RaidRecord { StartedAt = Time.timeAsDouble, EndsAt = double.MaxValue };
 
             RaidResult result = extracted ? RaidResult.Extracted
+                : character.Raid != null && character.Raid.ServerLeft ? RaidResult.Left
                 : record.KillerClientId != DamageInfo.NoInstigator && record.KillerClientId != character.OwnerId ? RaidResult.KilledByPlayer
                 : Time.timeAsDouble >= record.EndsAt - 0.5 ? RaidResult.MissingInAction
                 : RaidResult.KilledByBot;
@@ -275,6 +279,7 @@ namespace ExtractionShooter.Networking
             return new RaidSummary
             {
                 Result = result,
+                Difficulty = record.Difficulty,
                 Seconds = Mathf.Max(0, Mathf.RoundToInt((float)(Time.timeAsDouble - record.StartedAt))),
                 PlayerKills = record.PlayerKills,
                 BotKills = record.BotKills,

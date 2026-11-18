@@ -36,7 +36,13 @@ namespace ExtractionShooter.Gameplay.Inventory
         public IReadOnlyList<LootEntry> Entries => _entries;
 
         /// <summary>Rolls the table. Results may contain the same item more than once.</summary>
-        public List<LootDrop> Roll(System.Random random)
+        public List<LootDrop> Roll(System.Random random) => Roll(random, 0);
+
+        /// <summary>
+        /// Rolls the table with <paramref name="rollBonus"/> extra rolls (negative for fewer; at least one roll is kept when
+        /// the table rolls at all). Raid difficulty uses it.
+        /// </summary>
+        public List<LootDrop> Roll(System.Random random, int rollBonus)
         {
             if (random == null) throw new ArgumentNullException(nameof(random));
 
@@ -47,6 +53,7 @@ namespace ExtractionShooter.Gameplay.Inventory
             if (totalWeight <= 0) return results;
 
             int rolls = random.Next(_minRolls, Mathf.Max(_minRolls, _maxRolls) + 1);
+            if (rolls > 0) rolls = Mathf.Max(1, rolls + rollBonus);
             for (int i = 0; i < rolls; i++)
             {
                 int pick = random.Next(totalWeight);

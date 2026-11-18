@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using ExtractionShooter.Core.Combat;
+using ExtractionShooter.Core.Raid;
 using ExtractionShooter.Core.Throwables;
 using ExtractionShooter.Gameplay.Combat;
 using ExtractionShooter.Gameplay.Player;
@@ -51,6 +52,7 @@ namespace ExtractionShooter.Gameplay.AI
 
         private NavMeshAgent _agent;
         private Health _health;
+        private DifficultyModifiers _difficulty = DifficultyModifiers.Neutral;
         private Vector3 _home;
 
         private State _state;
@@ -117,6 +119,13 @@ namespace ExtractionShooter.Gameplay.AI
             BotSettings variant = _variants[index % _variants.Length];
             if (variant != null && variant.Weapon != null && variant.Ammo != null) _settings = variant;
         }
+
+        /// <summary>
+        /// Server, before spawning: how sharp this bot is for the raid's difficulty (aim, reaction, awareness, headshots).
+        /// </summary>
+        public void ServerApplyDifficulty(DifficultyModifiers difficulty) => _difficulty = difficulty;
+
+        private float ReactionSeconds => _settings.ReactionSeconds * _difficulty.BotReactionMultiplier;
 
         public override void OnStartServer()
         {
@@ -192,12 +201,12 @@ namespace ExtractionShooter.Gameplay.AI
                 Vector3 aim = AimPoint(player, _settings.ChestHeight);
                 Vector3 toTarget = aim - eye;
                 float distance = toTarget.magnitude;
-                if (distance > _settings.SightRange || distance < 0.01f) continue;
+                if (distance > _settings.SightRange * _difficulty.BotAwarenessMultiplier || distance < 0.01f) continue;
 
                 bool alreadyAware = player == _target && now - _lastSeenTime < AwareMemorySeconds;
                 if (!alreadyAware && IsInsertionProtected(player)) continue;
                 bool inView = Vector3.Angle(transform.forward, toTarget) <= _settings.FieldOfView * 0.5f;
-                if (!alreadyAware && !inView && distance > _settings.HearingRange) continue;
+                if (!alreadyAware && !inView && distance > _settings.HearingRange * _difficulty.BotAwarenessMultiplier) continue;
                 if (!HasLineOfSight(player, eye, toTarget / distance, distance)) continue;
 
                 if (distance < bestDistance)
@@ -220,7 +229,7 @@ namespace ExtractionShooter.Gameplay.AI
                 }
                 if (best != _target || !_targetVisible)
                 {
-                    _canShootAt = now + _settings.ReactionSeconds;
+                    _canShootAt = now + ReactionSeconds;
                     _engagedSince = _canShootAt;
                 }
                 _target = best;
@@ -276,7 +285,7 @@ namespace ExtractionShooter.Gameplay.AI
                 float now = Time.time;
                 if (_target != player || !_targetVisible)
                 {
-                    _canShootAt = Mathf.Max(_canShootAt, now + _settings.ReactionSeconds);
+                    _canShootAt = Mathf.Max(_canShootAt, now + ReactionSeconds);
                     _engagedSince = _canShootAt;
                 }
                 _target = player;
@@ -408,7 +417,7 @@ namespace ExtractionShooter.Gameplay.AI
         private void OnServerShotHeard(Vector3 origin, float audibleRange, int shooterClientId)
         {
             if (!_health.IsAlive || _settings == null || !_agent.isOnNavMesh) return;
-            float range = Mathf.Min(audibleRange, _settings.GunshotHearingRange);
+            float range = Mathf.Min(audibleRange, _settings.GunshotHearingRange * _difficulty.BotAwarenessMultiplier);
             if ((origin - transform.position).sqrMagnitude > range * range) return;
             if ((origin - _eye.position).sqrMagnitude < 0.25f) return; // our own shot
 
@@ -481,7 +490,7 @@ namespace ExtractionShooter.Gameplay.AI
             }
 
             Vector3 eye = _eye.position;
-            bool headshot = Random.value < _settings.HeadshotChance;
+            bool headshot = Random.value < _settings.HeadshotChance * _difficulty.BotHeadshotMultiplier;
             Vector3 aim = AimPoint(_target, headshot ? _settings.HeadHeight : _settings.ChestHeight);
             Vector3 direction = (aim - eye).normalized;
             Vector3 flatForward = transform.forward;
@@ -490,7 +499,8 @@ namespace ExtractionShooter.Gameplay.AI
             AmmoDefinition ammo = _settings.Ammo;
             // Aim settles while the bot keeps a target: the first shots go wide, giving players time to react.
             float settle = Mathf.Clamp01((now - _engagedSince) / _settings.AimSettleSeconds);
-            float aimError = _settings.AimError * Mathf.Lerp(_settings.FirstShotErrorMultiplier, 1f, settle);
+            float aimError = _settings.AimError * _difficulty.BotAimErrorMultiplier *
+                             Mathf.Lerp(_settings.FirstShotErrorMultiplier, 1f, settle);
             Vector3 aimed = ApplyAimError(direction, aimError, _settings.VerticalErrorScale);
             float spread = _settings.WeaponStats.Spread + ammo.ExtraSpread;
             var ends = new Vector3[ammo.Projectiles];

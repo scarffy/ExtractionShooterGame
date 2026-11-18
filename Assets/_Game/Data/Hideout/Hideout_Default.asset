@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c83e4ef69664e5e9eb2e506387d7ed1, type: 3}
+  m_Name: Hideout_Default
+  m_EditorClassIdentifier:
+  _stashTiers: 
+  - _width: 10
+    _height: 12
+    _price: 0
+  - _width: 10
+    _height: 16
+    _price: 12000
+  - _width: 10
+    _height: 20
+    _price: 30000
+  - _width: 10
+    _height: 26
+    _price: 65000
+  _recipes: 
+  - {fileID: 11400000, guid: 4bc18705ae724f468398e6588faa1619, type: 2}
+  - {fileID: 11400000, guid: e938fbc2e0eb480a88db6f44377ffc31, type: 2}
+  - {fileID: 11400000, guid: 3b070ae169794f2ca2f4f1fd7fe5fcce, type: 2}
+  - {fileID: 11400000, guid: 4bafcb1812df44658103662e1f95414e, type: 2}
+  - {fileID: 11400000, guid: b2c07a6a32a54426a991da67b9aa1ae1, type: 2}
+  - {fileID: 11400000, guid: feeba36e597a4c7ea707e4741361d748, type: 2}
+  - {fileID: 11400000, guid: 197524927b8c45a2b2e01ac7f7df29da, type: 2}
+  - {fileID: 11400000, guid: 1e174c64ef35434c8e25c118c6395b94, type: 2}
+  - {fileID: 11400000, guid: 81a2a9137fc54b5e964e66d7e26446ad, type: 2}
+  _craftSlots: 2
+  _maxPresets: 10

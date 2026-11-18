@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e411eb0a984048c49ca1805814563683, type: 3}
+  m_Name: Recipe_RedDot
+  m_EditorClassIdentifier:
+  _recipeId: red_dot_from_parts
+  _displayName: 
+  _inputs: 
+  - _item: {fileID: 11400000, guid: e168df120d4447c1b9cd3a99391fa0fc, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 48093b0006ef4f48ad85ac6ad7608600, type: 2}
+    _quantity: 2
+  _output: {fileID: 11400000, guid: 878ce71607794984aca98d4e15cacc37, type: 2}
+  _outputQuantity: 1
+  _craftSeconds: 240
+  _creditCost: 100

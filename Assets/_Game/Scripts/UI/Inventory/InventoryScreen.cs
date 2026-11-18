@@ -142,7 +142,8 @@ namespace ExtractionShooter.UI.Inventory
                 RefreshTitles();
             }
 
-            if (_player != null && _player.Input.ToggleInventoryPressed)
+            // Not under the pause menu: Escape there closes the menu first.
+            if (_player != null && _player.Input.ToggleInventoryPressed && !MenuState.IsOpen)
             {
                 if (_isOpen) Close();
                 else Open();

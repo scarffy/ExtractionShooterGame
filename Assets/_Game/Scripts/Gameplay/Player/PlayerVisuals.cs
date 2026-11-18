@@ -1,3 +1,4 @@
+using ExtractionShooter.Core.Combat;
 using ExtractionShooter.Gameplay.Combat;
 using ExtractionShooter.Gameplay.Inventory;
 using ExtractionShooter.Gameplay.Visuals;
@@ -23,6 +24,7 @@ namespace ExtractionShooter.Gameplay.Player
     public sealed class PlayerVisuals : NetworkBehaviour
     {
         private const float PitchOffset = 90f;
+        private const float TypicalUseSeconds = 4f;
 
         [Tooltip("The third-person body (child object).")]
         [SerializeField] private CharacterBody _body;
@@ -141,6 +143,7 @@ namespace ExtractionShooter.Gameplay.Player
             if (velocity.sqrMagnitude > 400f) velocity = Vector3.zero; // a teleport, not movement
 
             bool aiming = (_aim != null && _aim.IsAiming) || Time.time - _lastShotTime < _shoulderAfterShotSeconds;
+            float useSeconds = _injuries != null && _injuries.IsTreating ? Time.time - _injuries.UseStartedAt : 0f;
             _body.SetPose(new BodyPose
             {
                 LocalVelocity = transform.InverseTransformDirection(velocity),
@@ -150,6 +153,10 @@ namespace ExtractionShooter.Gameplay.Player
                 Aim01 = aiming ? 1f : 0f,
                 Sprinting = _motor != null && _motor.IsSprinting,
                 Lowered = (_reloader != null && _reloader.IsReloading) || (_injuries != null && _injuries.IsTreating),
+                UseItem = _injuries != null ? _injuries.UseVisual : UseItemVisual.None,
+                UseSeconds = useSeconds,
+                // Only the owner knows the item's use time; others see a typical one.
+                UseProgress = IsOwner && _injuries != null ? _injuries.TreatmentProgress : Mathf.Clamp01(useSeconds / TypicalUseSeconds),
             });
         }
 

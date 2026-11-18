@@ -27,3 +27,4 @@ MonoBehaviour:
   _width: 3
   _height: 3
   _weight: 9.5
+  _rarityOverride: 4

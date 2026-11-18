@@ -432,6 +432,7 @@ namespace ExtractionShooter.UI.Inventory
             var icon = slot.Q<VisualElement>("icon");
 
             ClearCategoryClasses(slot);
+            RarityStyle.Clear(slot);
             slot.RemoveFromClassList(BrokenClass);
             if (caption != null) caption.text = !_gridMode && _slotCaption != null ? _slotCaption(index) : string.Empty;
 
@@ -462,7 +463,10 @@ namespace ExtractionShooter.UI.Inventory
             }
 
             if (definition != null)
+            {
                 slot.AddToClassList(CategoryClassPrefix + definition.Category.ToString().ToLowerInvariant());
+                RarityStyle.Apply(slot, definition);
+            }
             if (definition is ArmorDefinition && stack.Durability <= 0)
                 slot.AddToClassList(BrokenClass);
         }

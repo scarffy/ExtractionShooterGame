@@ -152,6 +152,12 @@ MonoBehaviour:
     _quantity: 1
   - _item: {fileID: 11400000, guid: 81445fd023bf4b1183f66f0f5a4a2c36, type: 2}
     _quantity: 1
+  - _item: {fileID: 11400000, guid: a9523693fed4443e88cb9cc61ebbac10, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 7f04593b4f6a46f69a87d3c474400250, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 9521c0e24a3a4be58b0c8581a527cba5, type: 2}
+    _quantity: 1
   _safeBoxTiers: 
   - _name: Safe Box
     _width: 2

@@ -37,6 +37,10 @@ namespace ExtractionShooter.Gameplay.Inventory
 
         private PlayerCharacter _character;
         private PlayerEquipment _equipment;
+        private readonly List<SlotInventory> _quickHealInventories = new List<SlotInventory>();
+        private readonly List<int> _quickHealSlots = new List<int>();
+        private readonly List<MedicalDefinition> _quickHealMedicals = new List<MedicalDefinition>();
+        private readonly List<TreatmentOption> _quickHealOptions = new List<TreatmentOption>();
         private ItemContainer _serverSafeBox;
 
         /// <summary>Server: the containers this player was granted a view of, and the connection they were granted to.</summary>
@@ -132,6 +136,12 @@ namespace ExtractionShooter.Gameplay.Inventory
         public void RequestUse(ItemContainer source, int sourceSlot)
         {
             if (IsOwner && source != null) ServerUse(source, sourceSlot);
+        }
+
+        /// <summary>Uses the best medical item carried for the player's wounds (bleeding, then a fracture, then health).</summary>
+        public void RequestQuickHeal()
+        {
+            if (IsOwner) ServerQuickHeal();
         }
 
         // ---------------- Server RPCs ----------------
@@ -249,10 +259,79 @@ namespace ExtractionShooter.Gameplay.Inventory
             if (stack.IsEmpty || database == null || !database.TryGet(stack.ItemId, out ItemDefinition definition)) return;
             if (!(definition is MedicalDefinition medical)) return;
 
-            // The treatment runs over time on PlayerInjuries; the item is used up when it starts.
+            ServerTreat(medical, from, sourceSlot);
+        }
+
+        [ServerRpc]
+        private void ServerQuickHeal()
+        {
             PlayerInjuries injuries = _character.Injuries;
-            if (injuries != null ? injuries.ServerStartTreatment(medical) : _character.Health.ServerHeal(medical.HealAmount) > 0)
-                from.TakeFromSlot(sourceSlot, 1);
+            ItemDatabase database = _equipment.Container != null ? _equipment.Container.ItemDatabase : null;
+            if (!_character.Health.IsAlive || injuries == null || injuries.IsTreating || database == null) return;
+
+            // Every medical item carried (rig, pockets, backpack), first slot of each kind.
+            _quickHealInventories.Clear();
+            _quickHealSlots.Clear();
+            _quickHealMedicals.Clear();
+            _quickHealOptions.Clear();
+            foreach (ItemContainer container in _equipment.CarriedStorage)
+            {
+                SlotInventory inventory = container != null ? container.ServerInventory : null;
+                if (inventory == null) continue;
+                for (int slot = 0; slot < inventory.Capacity; slot++)
+                {
+                    ItemStack stack = inventory[slot];
+                    if (stack.IsEmpty || !database.TryGet(stack.ItemId, out ItemDefinition definition) ||
+                        !(definition is MedicalDefinition medical) || _quickHealMedicals.Contains(medical)) continue;
+                    _quickHealInventories.Add(inventory);
+                    _quickHealSlots.Add(slot);
+                    _quickHealMedicals.Add(medical);
+                    _quickHealOptions.Add(medical.ToOption());
+                }
+            }
+
+            int pick = TreatmentRules.PickQuickHeal(_quickHealOptions, injuries.ServerWounds);
+            if (pick >= 0) ServerTreat(_quickHealMedicals[pick], _quickHealInventories[pick], _quickHealSlots[pick]);
+        }
+
+        /// <summary>
+        /// Server: starts treating with the item in this slot. The item stays where it is until the treatment completes;
+        /// then one is taken from that slot, or from anywhere else carried if it was moved meanwhile.
+        /// </summary>
+        private void ServerTreat(MedicalDefinition medical, SlotInventory from, int sourceSlot)
+        {
+            PlayerInjuries injuries = _character.Injuries;
+            string itemId = from[sourceSlot].ItemId;
+            if (injuries == null)
+            {
+                if (_character.Health.ServerHeal(medical.HealAmount) > 0) from.TakeFromSlot(sourceSlot, 1);
+                return;
+            }
+            injuries.ServerStartTreatment(medical, () => ServerTakeOne(itemId, from, sourceSlot));
+        }
+
+        /// <summary>Server: takes one of an item, preferring the given slot, else any carried slot. False if none is left.</summary>
+        private bool ServerTakeOne(string itemId, SlotInventory preferred, int preferredSlot)
+        {
+            if (preferred != null && preferred.IsValidSlot(preferredSlot) && !preferred[preferredSlot].IsEmpty &&
+                preferred[preferredSlot].ItemId == itemId)
+            {
+                preferred.TakeFromSlot(preferredSlot, 1);
+                return true;
+            }
+
+            foreach (ItemContainer container in _equipment.CarriedStorage)
+            {
+                SlotInventory inventory = container != null ? container.ServerInventory : null;
+                if (inventory == null) continue;
+                for (int slot = 0; slot < inventory.Capacity; slot++)
+                {
+                    if (inventory[slot].IsEmpty || inventory[slot].ItemId != itemId) continue;
+                    inventory.TakeFromSlot(slot, 1);
+                    return true;
+                }
+            }
+            return false;
         }
 
         // ---------------- Server helpers ----------------
@@ -261,6 +340,9 @@ namespace ExtractionShooter.Gameplay.Inventory
 
         /// <summary>Server, session: the owner's safe box, usable during this raid.</summary>
         public void ServerSetSafeBox(ItemContainer safeBox) => _serverSafeBox = safeBox;
+
+        /// <summary>Server: the safe box this player may use during the raid, or null (keys in it open doors).</summary>
+        public ItemContainer ServerSafeBox => _serverSafeBox;
 
         /// <summary>The inventory if this player may use it right now, otherwise null.</summary>
         private SlotInventory ResolveAccessible(ItemContainer container, out ContainerRole role)

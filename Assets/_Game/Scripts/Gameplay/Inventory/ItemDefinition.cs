@@ -31,6 +31,9 @@ namespace ExtractionShooter.Gameplay.Inventory
         [SerializeField, Min(1)] private int _width = 1;
         [SerializeField, Min(1)] private int _height = 1;
 
+        [Tooltip("Rarity colour. Auto derives it from the value per grid cell (ammo: a full stack per cell); pick a tier to override.")]
+        [SerializeField] private RarityOverride _rarityOverride = RarityOverride.Auto;
+
         public string Id => _id;
         public string DisplayName => string.IsNullOrEmpty(_displayName) ? name : _displayName;
         public string Description => _description;
@@ -43,6 +46,10 @@ namespace ExtractionShooter.Gameplay.Inventory
 
         /// <summary>Cells the item covers in a grid inventory, unrotated.</summary>
         public ItemSize Size => new ItemSize(_width, _height);
+
+        /// <summary>Rarity tier (white to red), from the value per cell unless overridden. See <see cref="RarityRules"/>.</summary>
+        public ItemRarity Rarity =>
+            RarityRules.Resolve(_rarityOverride, _value, _category == ItemCategory.Ammo ? MaxStack : 1, Size);
 
         protected virtual void OnValidate()
         {

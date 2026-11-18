@@ -26,6 +26,7 @@ namespace ExtractionShooter.Gameplay.Raid
         private readonly SyncVar<int> _secondsLeft = new SyncVar<int>();
         private readonly SyncVar<byte> _extractPercent = new SyncVar<byte>();
         private readonly SyncVar<string> _zoneName = new SyncVar<string>();
+        private readonly SyncVar<RaidDifficulty> _difficulty = new SyncVar<RaidDifficulty>(RaidDifficulty.Normal);
 
         private PlayerCharacter _character;
         private double _raidEndsAt;
@@ -41,10 +42,16 @@ namespace ExtractionShooter.Gameplay.Raid
         public string ServerExtractedAt { get; private set; } = string.Empty;
         public long ServerExitFee { get; private set; }
 
+        /// <summary>Server: the player gave up the raid from the pause menu (their body stays with the gear).</summary>
+        public bool ServerLeft { get; private set; }
+
         /// <summary>Client side: time, zone or progress changed.</summary>
         public event Action Changed;
 
         public int SecondsLeft => _secondsLeft.Value;
+
+        /// <summary>The raid instance's difficulty.</summary>
+        public RaidDifficulty Difficulty => _difficulty.Value;
 
         /// <summary>Zone being extracted at, or empty.</summary>
         public string ZoneName => _zoneName.Value;
@@ -83,6 +90,31 @@ namespace ExtractionShooter.Gameplay.Raid
         /// Server, after spawning: ends this character's raid when its raid instance ends (same clock as
         /// <see cref="Time.timeAsDouble"/>) instead of a full duration after it spawned, so late joiners get less time.
         /// </summary>
+        /// <summary>
+        /// Owner: gives up the raid (pause menu "Leave raid"). The character dies where it stands, so the gear stays on its
+        /// body like any death; the player goes back to the hideout with the safe box and knife.
+        /// </summary>
+        public void RequestLeaveRaid()
+        {
+            if (IsOwner) ServerLeaveRaid();
+        }
+
+        [ServerRpc]
+        private void ServerLeaveRaid()
+        {
+            if (_finished || !_character.Health.IsAlive) return;
+            _finished = true;
+            ServerLeft = true;
+            SetZone(null);
+            _character.Health.ServerKill(new DamageInfo(_character.Health.Max, DamageInfo.NoInstigator,
+                transform.position, Vector3.down));
+        }
+
+        public void ServerSetDifficulty(RaidDifficulty difficulty)
+        {
+            if (IsServerInitialized) _difficulty.Value = difficulty;
+        }
+
         public void ServerSetRaidEnd(double endsAt)
         {
             if (!IsServerInitialized || _finished) return;

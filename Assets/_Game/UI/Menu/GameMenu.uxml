@@ -1,0 +1,85 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/_Game/UI/Menu/GameMenu.uss?fileID=7433441132597879392&amp;guid=f7a612af651a45a2af49ddd9ab728941&amp;type=3#GameMenu" />
+    <engine:VisualElement name="menu-root" class="menu-root" picking-mode="Ignore">
+
+        <!-- Main menu: shown whenever the player is not signed in. -->
+        <engine:VisualElement name="main-menu" class="menu-screen main-menu hidden">
+            <engine:VisualElement class="main-menu__column">
+                <engine:Label class="menu-title" text="EXTRACTION" />
+                <engine:Label class="menu-subtitle" text="RAID  ·  LOOT  ·  EXTRACT" />
+                <engine:VisualElement class="menu-panel main-menu__panel">
+                    <engine:TextField name="menu-name-field" label="Player name" max-length="16" class="menu-field" />
+                    <engine:VisualElement name="menu-main-buttons" class="menu-buttons">
+                        <engine:Button name="menu-host-button" class="menu-button menu-button--primary" text="Host game" />
+                        <engine:Label class="menu-section-label" text="Join a game" />
+                        <engine:VisualElement class="menu-join-row">
+                            <engine:TextField name="menu-address-field" label="Address" class="menu-field menu-field--address" />
+                            <engine:TextField name="menu-port-field" label="Port" max-length="5" class="menu-field menu-field--port" />
+                        </engine:VisualElement>
+                        <engine:Button name="menu-join-button" class="menu-button" text="Join game" />
+                        <engine:Button name="menu-server-button" class="menu-button menu-button--dev hidden" text="Dedicated server (dev)" />
+                        <engine:VisualElement class="menu-divider" />
+                        <engine:Button name="menu-settings-button" class="menu-button menu-button--quiet" text="Settings" />
+                        <engine:Button name="menu-quit-button" class="menu-button menu-button--quiet" text="Quit" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="menu-status" class="menu-status hidden">
+                        <engine:Label name="menu-status-label" class="menu-status__label" />
+                        <engine:Button name="menu-cancel-button" class="menu-button menu-button--quiet" text="Cancel" />
+                    </engine:VisualElement>
+                    <engine:Label name="menu-error" class="menu-error" />
+                </engine:VisualElement>
+                <engine:Label class="menu-footnote" text="The port is shared by host and join  ·  Esc in game opens the pause menu" />
+            </engine:VisualElement>
+        </engine:VisualElement>
+
+        <!-- Pause menu: Escape in the hideout or a raid. -->
+        <engine:VisualElement name="pause-menu" class="menu-screen menu-screen--overlay hidden">
+            <engine:VisualElement class="menu-panel pause-panel">
+                <engine:Label class="menu-heading" text="PAUSED" />
+                <engine:Label name="pause-context" class="menu-note pause-context" />
+                <engine:Button name="pause-resume-button" class="menu-button menu-button--primary" text="Resume" />
+                <engine:Button name="pause-settings-button" class="menu-button" text="Settings" />
+                <engine:Button name="pause-leave-button" class="menu-button menu-button--danger" text="Leave raid" />
+                <engine:Button name="pause-quit-button" class="menu-button menu-button--quiet" text="Quit game" />
+            </engine:VisualElement>
+        </engine:VisualElement>
+
+        <!-- Settings: shared by both menus. Controls are added by SettingsPanel. -->
+        <engine:VisualElement name="settings-screen" class="menu-screen menu-screen--overlay hidden">
+            <engine:VisualElement class="menu-panel settings-panel">
+                <engine:VisualElement class="settings-header">
+                    <engine:Label class="menu-heading" text="SETTINGS" />
+                    <engine:VisualElement class="settings-tabs">
+                        <engine:Button name="settings-tab-controls" class="menu-tab" text="Controls" />
+                        <engine:Button name="settings-tab-audio" class="menu-tab" text="Audio" />
+                        <engine:Button name="settings-tab-graphics" class="menu-tab" text="Graphics" />
+                    </engine:VisualElement>
+                </engine:VisualElement>
+                <engine:ScrollView name="settings-controls" class="settings-page" horizontal-scroller-visibility="Hidden">
+                    <engine:Label class="settings-section" text="Keys" />
+                    <engine:Label class="menu-note" text="Click a key, then press the new key or mouse button. Esc cancels. Keys used twice are marked." />
+                    <engine:VisualElement name="settings-bindings" class="binding-list" />
+                </engine:ScrollView>
+                <engine:ScrollView name="settings-audio" class="settings-page hidden" horizontal-scroller-visibility="Hidden" />
+                <engine:ScrollView name="settings-graphics" class="settings-page hidden" horizontal-scroller-visibility="Hidden" />
+                <engine:VisualElement class="settings-footer">
+                    <engine:Button name="settings-reset-button" class="menu-button menu-button--quiet" text="Reset to defaults" />
+                    <engine:Button name="settings-back-button" class="menu-button menu-button--primary" text="Back" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+        </engine:VisualElement>
+
+        <!-- Confirm box (leaving a raid loses gear). -->
+        <engine:VisualElement name="confirm-dialog" class="menu-screen menu-screen--modal hidden">
+            <engine:VisualElement class="menu-panel confirm-panel">
+                <engine:Label name="confirm-title" class="menu-heading" />
+                <engine:Label name="confirm-message" class="confirm-message" />
+                <engine:VisualElement class="confirm-buttons">
+                    <engine:Button name="confirm-cancel-button" class="menu-button menu-button--quiet" text="Cancel" />
+                    <engine:Button name="confirm-ok-button" class="menu-button menu-button--danger" text="Leave" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+        </engine:VisualElement>
+
+    </engine:VisualElement>
+</engine:UXML>

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ExtractionShooter.Core.Matchmaking;
+using ExtractionShooter.Core.Raid;
 using ExtractionShooter.Gameplay.Inventory;
 using ExtractionShooter.Gameplay.Raid;
 using ExtractionShooter.Gameplay.Session;
@@ -13,7 +14,7 @@ namespace ExtractionShooter.Networking
     /// <summary>
     /// Server only: spawns a networked loot container at each child point when the server starts.
     /// Containers are spawned at runtime (not placed as scene objects) so every raid gets fresh loot: each raid
-    /// instance after the first replaces them (their remaining contents go with them).
+    /// instance replaces them (their remaining contents go with them), with extra or fewer rolls for its difficulty.
     /// A point with a <see cref="LootPoint"/> gets that point's loot table and container name (high-tier crates,
     /// medical boxes); other points get the prefab's defaults.
     /// </summary>
@@ -33,6 +34,7 @@ namespace ExtractionShooter.Networking
 
         private readonly List<NetworkObject> _containers = new List<NetworkObject>();
         private bool _hasSpawned;
+        private int _rollBonus;
 
         private void Awake()
         {
@@ -64,13 +66,14 @@ namespace ExtractionShooter.Networking
             if (_lobby != null) _lobby.ServerRaidOpened -= HandleRaidOpened;
         }
 
-        /// <summary>A new raid instance after the first: replace every container with a freshly filled one.</summary>
+        /// <summary>A new raid instance: replace every container with one freshly filled for its difficulty.</summary>
         private void HandleRaidOpened(RaidInstance raid)
         {
-            if (!_hasSpawned || raid == null || raid.Id <= 1) return;
+            if (!_hasSpawned || raid == null) return;
 
             foreach (NetworkObject container in _containers)
                 if (container != null && container.IsSpawned) _networkManager.ServerManager.Despawn(container);
+            _rollBonus = _lobby != null ? _lobby.ModifiersFor(raid.Difficulty).LootRollBonus : 0;
             SpawnAll();
         }
 
@@ -97,6 +100,8 @@ namespace ExtractionShooter.Networking
                 if (point == null) continue;
                 NetworkObject container = Instantiate(_containerPrefab, point.position, point.rotation);
                 ApplyPointSettings(point, container);
+                LootSpawner loot = container.GetComponent<LootSpawner>();
+                if (loot != null) loot.ServerSetRollBonus(_rollBonus);
                 _networkManager.ServerManager.Spawn(container);
                 _containers.Add(container);
             }

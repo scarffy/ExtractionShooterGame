@@ -1,3 +1,4 @@
+using ExtractionShooter.Core.Raid;
 using ExtractionShooter.Gameplay.Player;
 using ExtractionShooter.Gameplay.Raid;
 using UnityEngine;
@@ -51,7 +52,7 @@ namespace ExtractionShooter.UI.Inventory
             if (_raid == null) return;
 
             int seconds = Mathf.Max(0, _raid.SecondsLeft);
-            string time = $"{seconds / 60:00}:{seconds % 60:00}";
+            string time = $"{_raid.Difficulty.DisplayName().ToUpperInvariant()}   {seconds / 60:00}:{seconds % 60:00}";
             _label.text = _raid.IsExtracting
                 ? $"{time}     Extracting at {_raid.ZoneName}  {Mathf.RoundToInt(_raid.ExtractProgress * 100f)}%"
                 : time;

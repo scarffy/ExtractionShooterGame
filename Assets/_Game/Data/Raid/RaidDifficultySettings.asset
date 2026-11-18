@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5b8b0e1241745c395674516df485b0e, type: 3}
+  m_Name: RaidDifficultySettings
+  m_EditorClassIdentifier:
+  _easy: 
+    _botCount: 0.6
+    _botAimError: 1.5
+    _botReaction: 1.5
+    _botAwareness: 0.8
+    _botHeadshot: 0.5
+    _lootRollBonus: -1
+  _normal: 
+    _botCount: 1.0
+    _botAimError: 1.0
+    _botReaction: 1.0
+    _botAwareness: 1.0
+    _botHeadshot: 1.0
+    _lootRollBonus: 0
+  _hard: 
+    _botCount: 1.5
+    _botAimError: 0.7
+    _botReaction: 0.7
+    _botAwareness: 1.2
+    _botHeadshot: 1.5
+    _lootRollBonus: 1

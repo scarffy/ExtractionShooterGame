@@ -425,6 +425,7 @@ namespace ExtractionShooter.Gameplay.Throwables
             }
             _audio.transform.position = _effectCenter;
             _audio.maxDistance = range;
+            _audio.volume = SoundVolumes.Effects;
             _audio.PlayOneShot(clip, volume);
         }
 

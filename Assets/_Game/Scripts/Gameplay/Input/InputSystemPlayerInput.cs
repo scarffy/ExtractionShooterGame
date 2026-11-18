@@ -1,4 +1,7 @@
+using System.Collections.Generic;
 using ExtractionShooter.Core.Input;
+using ExtractionShooter.Core.Settings;
+using ExtractionShooter.Gameplay.Settings;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -8,6 +11,8 @@ namespace ExtractionShooter.Gameplay.Input
     /// <see cref="IPlayerInput"/> backed by the Input System (keyboard/mouse and gamepad).
     /// Enabled only on the owning client by <see cref="Player.PlayerCharacter"/>.
     /// Gameplay input reads as zero while the cursor is unlocked (menus open).
+    /// Look speed and invert Y combine the serialized values with the player's settings (<see cref="GameSettingsStore"/>);
+    /// rebound keys come from <see cref="InputBindingStore"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class InputSystemPlayerInput : MonoBehaviour, IPlayerInput
@@ -40,8 +45,27 @@ namespace ExtractionShooter.Gameplay.Input
         private InputAction _cycleWeapon;
         private InputAction _throw;
         private InputAction _cycleThrowable;
+        private InputAction _ping;
+        private InputAction _quickHeal;
+        private InputAction _cancelUse;
         private InputAction _singleItemModifier;
-        private InputAction _togglePause;
+        private InputAction[] _actions;
+
+        /// <summary>
+        /// Every action above, in declaration order. The key-binding settings enumerate this list (keyboard and mouse
+        /// bindings become rebindable rows), so a new action only needs adding here and in <see cref="Awake"/>.
+        /// Escape / Start is not here: the pause menu owns it.
+        /// </summary>
+        public IReadOnlyList<InputAction> Actions => _actions;
+
+        /// <summary>The key shown for an action's first binding ("X"), e.g. for HUD hints; empty if unknown.</summary>
+        public string BindingLabel(string actionName)
+        {
+            if (_actions == null) return string.Empty;
+            foreach (InputAction action in _actions)
+                if (action != null && action.name == actionName) return action.GetBindingDisplayString(0);
+            return string.Empty;
+        }
 
         public Vector2 Move => IsGameplayActive ? Vector2.ClampMagnitude(_move.ReadValue<Vector2>(), 1f) : Vector2.zero;
 
@@ -51,9 +75,10 @@ namespace ExtractionShooter.Gameplay.Input
             {
                 if (!IsGameplayActive) return Vector2.zero;
 
-                Vector2 delta = _lookPointer.ReadValue<Vector2>() * _mouseSensitivity
+                GameSettings settings = GameSettingsStore.Current;
+                Vector2 delta = _lookPointer.ReadValue<Vector2>() * (_mouseSensitivity * settings.MouseSensitivity)
                               + _lookStick.ReadValue<Vector2>() * (_gamepadLookSpeed * Time.deltaTime);
-                if (_invertY) delta.y = -delta.y;
+                if (_invertY != settings.InvertY) delta.y = -delta.y;
                 return delta;
             }
         }
@@ -97,6 +122,10 @@ namespace ExtractionShooter.Gameplay.Input
         public bool ThrowPressed => IsGameplayActive && _throw.WasPressedThisFrame();
 
         public bool CycleThrowablePressed => IsGameplayActive && _cycleThrowable.WasPressedThisFrame();
+
+        public bool PingPressed => IsGameplayActive && _ping.WasPressedThisFrame();
+        public bool QuickHealPressed => IsGameplayActive && _quickHeal.WasPressedThisFrame();
+        public bool CancelUsePressed => IsGameplayActive && _cancelUse.WasPressedThisFrame();
 
         public bool SingleItemModifierHeld => _singleItemModifier.IsPressed();
 
@@ -154,23 +183,41 @@ namespace ExtractionShooter.Gameplay.Input
             _cycleThrowable = new InputAction("CycleThrowable", InputActionType.Button, "<Keyboard>/b");
             _cycleThrowable.AddBinding("<Gamepad>/dpad/left");
 
+            _ping = new InputAction("Ping", InputActionType.Button, "<Mouse>/middleButton");
+            _ping.AddBinding("<Keyboard>/z");
+            _ping.AddBinding("<Gamepad>/dpad/up");
+
+            _quickHeal = new InputAction("QuickHeal", InputActionType.Button, "<Keyboard>/4");
+            _quickHeal.AddBinding("<Gamepad>/dpad/down");
+            _cancelUse = new InputAction("CancelUse", InputActionType.Button, "<Keyboard>/x");
+            _cancelUse.AddBinding("<Gamepad>/dpad/right");
+
             _singleItemModifier = new InputAction("SingleItemModifier", InputActionType.Button, "<Keyboard>/leftAlt");
             _singleItemModifier.AddBinding("<Keyboard>/rightAlt");
 
-            _togglePause = new InputAction("TogglePause", InputActionType.Button, "<Keyboard>/escape");
-            _togglePause.AddBinding("<Gamepad>/start");
+            _actions = new[] { _move, _lookPointer, _lookStick, _jump, _fire, _aim, _sprint, _crouch, _melee, _reload, _interact, _toggleInventory, _toggleMap,
+                _weapon1, _weapon2, _weapon3, _cycleWeapon, _throw, _cycleThrowable, _ping, _quickHeal, _cancelUse, _singleItemModifier };
         }
 
         private void OnEnable()
         {
-            _togglePause.performed += OnTogglePause;
+            InputBindingStore.ApplyTo(_actions);
+            InputBindingStore.Changed += OnBindingsChanged;
             SetActionsEnabled(true);
         }
 
         private void OnDisable()
         {
-            _togglePause.performed -= OnTogglePause;
+            InputBindingStore.Changed -= OnBindingsChanged;
             SetActionsEnabled(false);
+        }
+
+        /// <summary>The player rebound a key in the settings: take the new bindings (actions are re-enabled around it).</summary>
+        private void OnBindingsChanged()
+        {
+            SetActionsEnabled(false);
+            InputBindingStore.ApplyTo(_actions);
+            SetActionsEnabled(true);
         }
 
         private void OnDestroy()
@@ -194,21 +241,19 @@ namespace ExtractionShooter.Gameplay.Input
             _cycleWeapon.Dispose();
             _throw.Dispose();
             _cycleThrowable.Dispose();
+            _ping.Dispose();
+            _quickHeal.Dispose();
+            _cancelUse.Dispose();
             _singleItemModifier.Dispose();
-            _togglePause.Dispose();
         }
 
         private void SetActionsEnabled(bool enabled)
         {
-            InputAction[] actions = { _move, _lookPointer, _lookStick, _jump, _fire, _aim, _sprint, _crouch, _melee, _reload, _interact, _toggleInventory, _toggleMap,
-                _weapon1, _weapon2, _weapon3, _cycleWeapon, _throw, _cycleThrowable, _singleItemModifier, _togglePause };
-            foreach (InputAction action in actions)
+            foreach (InputAction action in _actions)
             {
                 if (enabled) action.Enable();
                 else action.Disable();
             }
         }
-
-        private static void OnTogglePause(InputAction.CallbackContext _) => CursorController.Toggle();
     }
 }

@@ -45,7 +45,7 @@ namespace ExtractionShooter.Gameplay.Trading
             offer != null && offer.Item != null ? TradeMath.BuyPrice(offer.Item.Value, offer.Quantity, _buyMarkup) : 0;
 
         /// <summary>
-        /// What the trader pays for <paramref name="quantity"/> of a stack: its value scaled by condition (armor),
+        /// What the trader pays for <paramref name="quantity"/> of a stack: its value scaled by condition (armor durability, key uses left),
         /// plus the rounds loaded in a weapon. 0 when the item is unknown or worthless.
         /// </summary>
         public long SellPrice(in ItemStack stack, int quantity, ItemDatabase database)
@@ -54,7 +54,9 @@ namespace ExtractionShooter.Gameplay.Trading
                 return 0;
 
             int count = Mathf.Clamp(quantity, 0, stack.Quantity);
-            float condition = item is ArmorDefinition armor ? TradeMath.Condition(stack.Durability, armor.MaxDurability) : 1f;
+            float condition = item is ArmorDefinition armor ? TradeMath.Condition(stack.Durability, armor.MaxDurability)
+                : item is KeyDefinition key ? KeyUses.Condition(stack.Durability, key.MaxUses)
+                : 1f;
             long price = TradeMath.SellPrice(item.Value, count, _sellRatio, condition);
 
             if (stack.AmmoCount > 0 && count > 0 && database.TryGet(stack.AmmoId, out ItemDefinition ammo))

@@ -55,3 +55,19 @@ MonoBehaviour:
     _weight: 3
     _minQuantity: 1
     _maxQuantity: 1
+  - _item: {fileID: 11400000, guid: 617b7d195a6e43d385c4fde32727107c, type: 2}
+    _weight: 1
+    _minQuantity: 1
+    _maxQuantity: 1
+  - _item: {fileID: 11400000, guid: a9523693fed4443e88cb9cc61ebbac10, type: 2}
+    _weight: 1
+    _minQuantity: 1
+    _maxQuantity: 1
+  - _item: {fileID: 11400000, guid: 7f04593b4f6a46f69a87d3c474400250, type: 2}
+    _weight: 1
+    _minQuantity: 1
+    _maxQuantity: 1
+  - _item: {fileID: 11400000, guid: 9521c0e24a3a4be58b0c8581a527cba5, type: 2}
+    _weight: 1
+    _minQuantity: 1
+    _maxQuantity: 1

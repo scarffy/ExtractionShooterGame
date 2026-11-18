@@ -62,5 +62,14 @@ namespace ExtractionShooter.Gameplay.Input
 
         /// <summary>True on the frame "next grenade type" was pressed (B, d-pad left).</summary>
         bool CycleThrowablePressed { get; }
+
+        /// <summary>True on the frame "ping" was pressed (middle mouse, Z, d-pad up). A quick double press marks danger.</summary>
+        bool PingPressed { get; }
+
+        /// <summary>True on the frame "quick heal" was pressed (4, d-pad down): uses the best medical item for your wounds.</summary>
+        bool QuickHealPressed { get; }
+
+        /// <summary>True on the frame "cancel use" was pressed (X, d-pad right): stops healing; the item is kept.</summary>
+        bool CancelUsePressed { get; }
     }
 }

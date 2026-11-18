@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ExtractionShooter.Core.Raid;
 
 namespace ExtractionShooter.Core.Matchmaking
 {
@@ -10,8 +11,10 @@ namespace ExtractionShooter.Core.Matchmaking
     {
         private readonly List<int> _squads = new List<int>();
 
-        public RaidInstance(int id, double startTime, double durationSeconds, int maxPlayers, double lateJoinSeconds)
+        public RaidInstance(int id, double startTime, double durationSeconds, int maxPlayers, double lateJoinSeconds,
+            RaidDifficulty difficulty = RaidDifficulty.Normal)
         {
+            Difficulty = difficulty;
             Id = id;
             StartTime = startTime;
             DurationSeconds = durationSeconds;
@@ -20,6 +23,9 @@ namespace ExtractionShooter.Core.Matchmaking
         }
 
         public int Id { get; }
+
+        /// <summary>Every squad in this instance queued for this difficulty.</summary>
+        public RaidDifficulty Difficulty { get; }
         public double StartTime { get; }
         public double DurationSeconds { get; }
         public int MaxPlayers { get; }

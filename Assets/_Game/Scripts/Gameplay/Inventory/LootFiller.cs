@@ -11,11 +11,12 @@ namespace ExtractionShooter.Gameplay.Inventory
         /// Adds one roll of the table. Items are created through <see cref="ItemFactory"/> so armor and bags
         /// get their state; stops at the first item that does not fit (its state is destroyed, never leaked).
         /// </summary>
-        public static void ServerFill(NetworkManager networkManager, LootTable table, SlotInventory inventory, Random random)
+        public static void ServerFill(NetworkManager networkManager, LootTable table, SlotInventory inventory, Random random,
+            int rollBonus = 0)
         {
             if (table == null || inventory == null || random == null) return;
 
-            foreach (LootDrop drop in table.Roll(random))
+            foreach (LootDrop drop in table.Roll(random, rollBonus))
             {
                 // Stateful items (armor, bags, weapons) are created one at a time.
                 int count = drop.Definition.MaxStack == 1 ? drop.Quantity : 1;

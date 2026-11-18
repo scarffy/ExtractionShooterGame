@@ -100,11 +100,16 @@
                     <engine:Button name="tab-stash" class="hideout-tab hideout-tab--active" text="Stash" />
                     <engine:Button name="tab-trader" class="hideout-tab" text="Trader" />
                     <engine:Button name="tab-squad" class="hideout-tab" text="Squad" />
+                    <engine:Button name="tab-workbench" class="hideout-tab" text="Workbench" />
                 </engine:VisualElement>
                 <engine:VisualElement class="hideout-header__right">
                     <engine:Label name="trade-message" class="trade-message" picking-mode="Ignore" />
                     <engine:Label name="hideout-credits" class="hideout-credits" picking-mode="Ignore" />
                     <engine:Label name="queue-status" class="queue-status" picking-mode="Ignore" />
+                    <engine:VisualElement name="difficulty-picker" class="difficulty-picker">
+                        <engine:Button name="difficulty-lower" class="difficulty-button" text="Easy" />
+                        <engine:Button name="difficulty-upper" class="difficulty-button" text="Normal" />
+                    </engine:VisualElement>
                     <engine:Button name="find-match-button" class="panel-button deploy-button" text="Find match" />
                 </engine:VisualElement>
             </engine:VisualElement>
@@ -212,10 +217,41 @@
                         <engine:Label class="squad-note" text="The leader starts the search once everyone is ready. Squads are never split and squadmates spawn together. A raid can be joined during its first minutes while it has room; otherwise you wait for the next one." />
                     </engine:VisualElement>
                 </engine:VisualElement>
+                <engine:VisualElement name="workbench-column" class="inventory-column inventory-column--workbench hidden">
+                    <engine:VisualElement class="inventory-panel workbench-panel">
+                        <engine:VisualElement class="panel-header">
+                            <engine:Label class="panel-title" text="Workbench" />
+                            <engine:VisualElement class="trader-filters">
+                                <engine:Button name="workbench-mode-crafting" class="trader-filter trader-filter--active" text="Crafting" />
+                                <engine:Button name="workbench-mode-gunbench" class="trader-filter" text="Gun bench" />
+                            </engine:VisualElement>
+                        </engine:VisualElement>
+                        <engine:VisualElement name="workbench-crafting" class="workbench-body">
+                            <engine:ScrollView name="workbench-recipes" class="workbench-main" mode="Vertical" horizontal-scroller-visibility="Hidden" />
+                            <engine:VisualElement class="workbench-side">
+                                <engine:Label name="workbench-queue-title" class="workbench-subtitle" text="Queue" />
+                                <engine:VisualElement name="workbench-queue" class="workbench-queue" />
+                                <engine:Button name="workbench-collect-all" class="panel-button hidden" text="Collect all" />
+                            </engine:VisualElement>
+                        </engine:VisualElement>
+                        <engine:VisualElement name="gunbench" class="workbench-body hidden">
+                            <engine:ScrollView name="gunbench-weapon" class="workbench-main" mode="Vertical" horizontal-scroller-visibility="Hidden" />
+                            <engine:VisualElement class="workbench-side">
+                                <engine:Label name="gunbench-presets-title" class="workbench-subtitle" text="Presets" />
+                                <engine:VisualElement class="squad-row">
+                                    <engine:TextField name="gunbench-preset-name" class="squad-field gunbench-name-field" max-length="24" placeholder-text="Preset name" />
+                                    <engine:Button name="gunbench-save-button" class="panel-button squad-button gunbench-save-button" text="Save preset" />
+                                </engine:VisualElement>
+                                <engine:ScrollView name="gunbench-presets" class="workbench-presets" mode="Vertical" horizontal-scroller-visibility="Hidden" />
+                            </engine:VisualElement>
+                        </engine:VisualElement>
+                    </engine:VisualElement>
+                </engine:VisualElement>
                 <engine:VisualElement name="stash-column" class="inventory-column inventory-column--stash">
                     <engine:VisualElement name="stash-panel" class="inventory-panel">
                         <engine:VisualElement class="panel-header">
                             <engine:Label name="stash-title" class="panel-title" text="Stash" />
+                            <engine:Button name="stash-upgrade-button" class="panel-button panel-button--small stash-upgrade-button hidden" text="Upgrade" />
                             <engine:Button name="stash-sort-button" class="panel-button panel-button--small" text="Sort" />
                         </engine:VisualElement>
                         <engine:ScrollView name="stash-scroll" class="stash-scroll" mode="Vertical" horizontal-scroller-visibility="Hidden">
@@ -236,7 +272,7 @@
         </engine:VisualElement>
         <engine:VisualElement name="raid-summary" class="raid-summary hidden">
             <engine:VisualElement class="raid-summary__panel">
-                <engine:Label class="raid-summary__caption" text="RAID SUMMARY" />
+                <engine:Label name="raid-summary-caption" class="raid-summary__caption" text="RAID SUMMARY" />
                 <engine:Label name="raid-summary-result" class="raid-summary__result" />
                 <engine:Label name="raid-summary-time" class="raid-summary__time" />
                 <engine:VisualElement class="raid-summary__rows">

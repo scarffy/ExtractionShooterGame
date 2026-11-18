@@ -959,3 +959,419 @@
     align-self: flex-end;
     margin-top: 18px;
 }
+
+/* ---------- Raid difficulty picker (hideout header) ---------- */
+
+.difficulty-picker {
+    flex-direction: row;
+    margin-right: 14px;
+    padding: 3px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.difficulty-button {
+    width: 92px;
+    height: 38px;
+    margin: 0 2px;
+    border-width: 0;
+    border-radius: 4px;
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: rgba(230, 225, 210, 0.6);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.difficulty-button:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.difficulty-button--active {
+    color: rgb(22, 26, 30);
+    background-color: rgb(230, 190, 90);
+}
+
+.difficulty-button--active.difficulty-button--easy {
+    background-color: rgb(140, 200, 120);
+}
+
+.difficulty-button--active.difficulty-button--hard {
+    background-color: rgb(230, 110, 90);
+}
+
+.difficulty-picker:disabled {
+    opacity: 0.6;
+}
+
+/* ---------- Rarity (loot agent) ----------
+   Delta Force colours by value: white, green, blue, purple, gold, red (RarityStyle.cs / Core RarityRules).
+   A tinted tile background plus a coloured bar along the bottom; the category stripe stays on the left. */
+.slot.rarity--white  { background-color: rgba(50, 55, 61, 0.95);  border-bottom-width: 3px; border-bottom-color: rgb(150, 155, 160); }
+.slot.rarity--green  { background-color: rgba(51, 74, 61, 0.95);  border-bottom-width: 3px; border-bottom-color: rgb(95, 184, 95); }
+.slot.rarity--blue   { background-color: rgba(48, 65, 86, 0.95);  border-bottom-width: 3px; border-bottom-color: rgb(79, 143, 224); }
+.slot.rarity--purple { background-color: rgba(66, 58, 86, 0.95);  border-bottom-width: 3px; border-bottom-color: rgb(168, 106, 224); }
+.slot.rarity--gold   { background-color: rgba(77, 72, 54, 0.95);  border-bottom-width: 3px; border-bottom-color: rgb(224, 176, 64); }
+.slot.rarity--red    { background-color: rgba(77, 53, 56, 0.95);  border-bottom-width: 3px; border-bottom-color: rgb(224, 80, 74); }
+
+.slot.rarity--white:hover  { background-color: rgba(64, 70, 76, 0.95); }
+.slot.rarity--green:hover  { background-color: rgba(58, 90, 66, 0.95); }
+.slot.rarity--blue:hover   { background-color: rgba(52, 77, 107, 0.95); }
+.slot.rarity--purple:hover { background-color: rgba(81, 65, 107, 0.95); }
+.slot.rarity--gold:hover   { background-color: rgba(99, 88, 56, 0.95); }
+.slot.rarity--red:hover    { background-color: rgba(99, 57, 59, 0.95); }
+
+/* Keys: category stripe. */
+.slot--key { border-left-color: rgb(205, 190, 120); }
+
+/* Broken armor stays red-brown whatever its rarity; the bar still shows the tier. */
+.slot.slot--broken { background-color: rgba(70, 30, 30, 0.95); }
+.slot.slot--broken:hover { background-color: rgba(86, 38, 38, 0.95); }
+
+/* ---------- Hideout: stash upgrade, workbench (crafting + gun bench) ---------- */
+
+/* Pushed right, next to Sort. */
+.stash-upgrade-button {
+    margin-left: auto;
+    margin-right: 8px;
+    background-color: rgb(120, 98, 44);
+}
+
+.stash-upgrade-button:hover {
+    background-color: rgb(146, 120, 54);
+}
+
+/* Same place and width as the trader and squad columns. */
+.inventory-column--workbench {
+    width: 1150px;
+}
+
+.workbench-body {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.workbench-main {
+    width: 640px;
+    height: 700px;
+    margin-right: 14px;
+}
+
+.workbench-side {
+    flex-grow: 1;
+    flex-shrink: 1;
+    padding: 10px 12px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.workbench-subtitle {
+    margin-bottom: 8px;
+    color: rgb(230, 190, 90);
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+/* Recipe rows: left accent by output category, like stash slots. */
+.workbench-recipe {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-left-width: 4px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(30, 35, 40);
+}
+
+.workbench-recipe:hover {
+    background-color: rgb(38, 44, 50);
+}
+
+.workbench-recipe--ready {
+    border-right-color: rgba(150, 200, 120, 0.45);
+    border-top-color: rgba(150, 200, 120, 0.45);
+    border-bottom-color: rgba(150, 200, 120, 0.45);
+}
+
+.workbench-recipe.slot--ammo     { border-left-color: rgb(196, 160, 72); }
+.workbench-recipe.slot--medical  { border-left-color: rgb(196, 72, 72); }
+.workbench-recipe.slot--valuable { border-left-color: rgb(120, 170, 220); }
+.workbench-recipe.slot--weapon   { border-left-color: rgb(170, 170, 170); }
+.workbench-recipe.slot--armor    { border-left-color: rgb(110, 150, 100); }
+.workbench-recipe.slot--attachment { border-left-color: rgb(150, 120, 200); }
+
+.workbench-recipe__info {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.workbench-recipe__name {
+    color: rgb(235, 235, 225);
+    font-size: 16px;
+    -unity-font-style: bold;
+}
+
+.workbench-recipe__meta {
+    margin-top: 4px;
+    color: rgba(230, 225, 210, 0.55);
+    font-size: 13px;
+}
+
+.workbench-recipe__button {
+    width: 96px;
+    margin: 0 0 0 10px;
+}
+
+.workbench-chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+
+.workbench-chip {
+    margin: 2px 6px 2px 0;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background-color: rgba(150, 200, 120, 0.14);
+    color: rgb(170, 215, 140);
+    font-size: 13px;
+}
+
+.workbench-chip--missing {
+    background-color: rgba(240, 120, 90, 0.14);
+    color: rgb(240, 130, 100);
+}
+
+/* Craft queue. */
+.workbench-job {
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(30, 35, 40);
+}
+
+.workbench-job--done {
+    border-color: rgba(150, 200, 120, 0.6);
+}
+
+.workbench-job--empty {
+    color: rgba(230, 225, 210, 0.35);
+    font-size: 14px;
+    -unity-text-align: middle-center;
+    border-color: rgba(255, 255, 255, 0.05);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.workbench-job__header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.workbench-job__name {
+    color: rgb(235, 235, 225);
+    font-size: 15px;
+    -unity-font-style: bold;
+}
+
+.workbench-job__time {
+    color: rgb(230, 190, 90);
+    font-size: 15px;
+    -unity-font-style: bold;
+}
+
+.workbench-job--done .workbench-job__time {
+    color: rgb(150, 200, 120);
+}
+
+.workbench-progress {
+    height: 6px;
+    margin-top: 6px;
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.workbench-progress__fill {
+    height: 100%;
+    width: 0;
+    background-color: rgb(230, 190, 90);
+}
+
+.workbench-job--done .workbench-progress__fill {
+    background-color: rgb(150, 200, 120);
+}
+
+.workbench-job__button {
+    height: 28px;
+    margin-top: 8px;
+}
+
+/* Gun bench. */
+.gunbench-picker {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.gunbench-picker .trader-filter {
+    margin: 2px 6px 2px 0;
+}
+
+.gunbench-note {
+    margin: 4px 10px 4px 0;
+    color: rgba(230, 225, 210, 0.5);
+    font-size: 13px;
+    white-space: normal;
+}
+
+.gunbench-title {
+    margin: 6px 0 8px 0;
+    color: rgb(240, 236, 220);
+    font-size: 20px;
+    -unity-font-style: bold;
+}
+
+.gunbench-stats {
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.gunbench-stat {
+    flex-direction: row;
+    height: 22px;
+    align-items: center;
+}
+
+.gunbench-stat__name {
+    width: 160px;
+    color: rgba(230, 225, 210, 0.6);
+    font-size: 14px;
+}
+
+.gunbench-stat__bare {
+    width: 140px;
+    color: rgba(230, 225, 210, 0.45);
+    font-size: 14px;
+}
+
+.gunbench-stat__now {
+    color: rgb(235, 235, 225);
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.gunbench-stat--better {
+    color: rgb(150, 210, 120);
+}
+
+.gunbench-stat--worse {
+    color: rgb(240, 130, 100);
+}
+
+.gunbench-slot {
+    margin-bottom: 6px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(30, 35, 40);
+}
+
+.gunbench-slot__header {
+    flex-direction: row;
+    align-items: center;
+    min-height: 28px;
+}
+
+.gunbench-slot__name {
+    width: 110px;
+    color: rgba(230, 225, 210, 0.6);
+    font-size: 14px;
+}
+
+.gunbench-slot__fitted {
+    flex-grow: 1;
+    color: rgb(235, 235, 225);
+    font-size: 15px;
+    -unity-font-style: bold;
+}
+
+.gunbench-slot__fitted--empty {
+    color: rgba(230, 225, 210, 0.35);
+    -unity-font-style: normal;
+}
+
+.gunbench-slot__remove {
+    margin: 0;
+}
+
+.gunbench-fit {
+    margin: 2px 6px 2px 0;
+}
+
+.gunbench-name-field {
+    flex-grow: 1;
+    width: auto;
+}
+
+.gunbench-save-button {
+    min-width: 110px;
+    margin-right: 0;
+}
+
+.workbench-presets {
+    height: 600px;
+    margin-top: 10px;
+}
+
+.gunbench-preset {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+    padding: 8px 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+    background-color: rgb(30, 35, 40);
+}
+
+.gunbench-preset__info {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.gunbench-preset__name {
+    color: rgb(235, 235, 225);
+    font-size: 15px;
+    -unity-font-style: bold;
+}
+
+.gunbench-preset__name:hover {
+    color: rgb(230, 190, 90);
+}
+
+.gunbench-preset__parts {
+    margin-top: 2px;
+    color: rgba(230, 225, 210, 0.55);
+    font-size: 12px;
+    white-space: normal;
+}
+
+.gunbench-preset__buy {
+    min-width: 120px;
+    height: 30px;
+    margin: 0 0 0 8px;
+}
+
+.gunbench-preset__delete {
+    height: 30px;
+    margin: 0 0 0 6px;
+    padding: 0 10px;
+}

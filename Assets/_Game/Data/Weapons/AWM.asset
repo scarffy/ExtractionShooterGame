@@ -48,3 +48,4 @@ MonoBehaviour:
   _width: 5
   _height: 2
   _weight: 6.9
+  _rarityOverride: 5

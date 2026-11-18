@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using ExtractionShooter.Core.Input;
 using ExtractionShooter.Core.Navigation;
+using ExtractionShooter.Core.Squad;
 using ExtractionShooter.Gameplay.Player;
 using ExtractionShooter.Gameplay.Raid;
+using ExtractionShooter.Gameplay.Session;
 using ExtractionShooter.UI.Inventory;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -15,8 +17,8 @@ namespace ExtractionShooter.UI.Hud
     /// The play area and the cover on it are read at runtime from the renderers under the environment root
     /// (the one named <see cref="_groundName"/> is the ground and sets the map bounds; every other renderer is drawn
     /// as an obstacle footprint). Shows a 10 m grid, the extraction zones (labelled with name and distance),
-    /// squad members from <see cref="TeammateRoster"/>, the local player as an arrow facing their heading, and the
-    /// raid time left. The left side is kept free for the <see cref="TacticalPanelView"/>.
+    /// squad members from <see cref="TeammateRoster"/>, the squad's pings (<see cref="SquadPings"/>), the local player
+    /// as an arrow facing their heading, and the raid time left. The left side is kept free for the <see cref="TacticalPanelView"/>.
     /// Never open together with the inventory: opening the inventory closes the map. Built in code.
     /// </summary>
     [DisallowMultipleComponent]
@@ -26,6 +28,7 @@ namespace ExtractionShooter.UI.Hud
         private const float HeaderHeight = 52f;
         private const float ArrowSize = 22f;
         private const float TeammateDotSize = 10f;
+        private const float PingSize = 11f;
         private const float ZoneLabelWidth = 200f;
 
         [Tooltip("Root of the level geometry. Its child renderers are the ground and the cover drawn on the map.")]
@@ -62,6 +65,7 @@ namespace ExtractionShooter.UI.Hud
         private readonly List<VisualElement> _obstacleViews = new List<VisualElement>();
         private readonly List<ZoneView> _zoneViews = new List<ZoneView>();
         private readonly List<TeammateView> _teammateViews = new List<TeammateView>();
+        private readonly List<VisualElement> _pingViews = new List<VisualElement>();
         private readonly List<TeammateInfo> _teammates = new List<TeammateInfo>();
 
         private VisualElement _overlay;
@@ -174,6 +178,7 @@ namespace ExtractionShooter.UI.Hud
             _obstacleViews.Clear();
             _zoneViews.Clear();
             _teammateViews.Clear();
+            _pingViews.Clear();
             _discovered = false;
         }
 
@@ -266,6 +271,7 @@ namespace ExtractionShooter.UI.Hud
             Vector3 position = _player.transform.position;
             LayoutZones(position);
             LayoutTeammates();
+            LayoutPings();
 
             _projection.WorldToMap(position.x, position.z, out float playerX, out float playerY);
             MapUi.Move(_arrow, playerX - ArrowSize * 0.5f, playerY - ArrowSize * 0.5f);
@@ -435,6 +441,34 @@ namespace ExtractionShooter.UI.Hud
                 MapUi.Show(_teammateViews[i].Dot, false);
                 MapUi.Show(_teammateViews[i].Name, false);
             }
+        }
+
+        /// <summary>Squad pings as diamonds in their ping colour (<see cref="PingStyle"/>).</summary>
+        private void LayoutPings()
+        {
+            SquadPings.Prune();
+            IReadOnlyList<SquadPing> pings = SquadPings.Board.Active;
+            for (int i = 0; i < Math.Max(pings.Count, _pingViews.Count); i++)
+            {
+                if (i == _pingViews.Count) _pingViews.Add(CreatePingView());
+                VisualElement view = _pingViews[i];
+                bool used = i < pings.Count;
+                MapUi.Show(view, used);
+                if (!used) continue;
+
+                _projection.WorldToMap(pings[i].X, pings[i].Z, out float x, out float y);
+                MapUi.Move(view, x - PingSize * 0.5f, y - PingSize * 0.5f);
+                view.style.backgroundColor = PingStyle.ColorOf(pings[i].Kind);
+            }
+        }
+
+        private VisualElement CreatePingView()
+        {
+            VisualElement view = MapUi.Diamond(PingSize, PingStyle.Location, PingStyle.Outline);
+            view.name = "map-ping";
+            _mapArea.Add(view);
+            _arrow.BringToFront();
+            return view;
         }
 
         private TeammateView CreateTeammateView()

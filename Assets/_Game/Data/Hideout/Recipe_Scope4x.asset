@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e411eb0a984048c49ca1805814563683, type: 3}
+  m_Name: Recipe_Scope4x
+  m_EditorClassIdentifier:
+  _recipeId: scope_4x_from_red_dot
+  _displayName: 
+  _inputs: 
+  - _item: {fileID: 11400000, guid: 878ce71607794984aca98d4e15cacc37, type: 2}
+    _quantity: 1
+  - _item: {fileID: 11400000, guid: 823cde7a83134e0f9d027b63b52486d5, type: 2}
+    _quantity: 1
+  _output: {fileID: 11400000, guid: 41bb4f4d158a4606841f9d0ef9044874, type: 2}
+  _outputQuantity: 1
+  _craftSeconds: 600
+  _creditCost: 400

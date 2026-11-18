@@ -26,15 +26,18 @@ namespace ExtractionShooter.UI.Inventory
                     return $"{bag.GridWidth}x{bag.GridHeight}";
                 case MedicalDefinition medical:
                     return $"+{medical.HealAmount} HP";
+                case KeyDefinition key:
+                    return $"{key.UsesLeft(stack)}/{key.MaxUses}";
                 default:
                     return string.Empty;
             }
         }
 
-        /// <summary>One-line description with stats, for the inventory details bar.</summary>
+        /// <summary>One-line description with rarity and stats, for the inventory details bar (rich text).</summary>
         public static string Details(ItemDefinition definition, in ItemStack stack, ItemDatabase database)
         {
             var text = new StringBuilder(definition.DisplayName);
+            text.Append("  [").Append(RarityStyle.RichName(definition.Rarity)).Append(']');
             switch (definition)
             {
                 case WeaponDefinition weapon:
@@ -63,6 +66,11 @@ namespace ExtractionShooter.UI.Inventory
                     break;
                 case MedicalDefinition medical:
                     text.Append("  —  Heals ").Append(medical.HealAmount).Append("   (right-click to use)");
+                    break;
+                case KeyDefinition key:
+                    text.Append("  —  Uses ").Append(key.UsesLeft(stack)).Append('/').Append(key.MaxUses);
+                    if (!string.IsNullOrEmpty(definition.Description)) text.Append("  ·  ").Append(definition.Description);
+                    text.Append("   (carry it to unlock its door)");
                     break;
                 default:
                     if (!string.IsNullOrEmpty(definition.Description)) text.Append("  —  ").Append(definition.Description);
