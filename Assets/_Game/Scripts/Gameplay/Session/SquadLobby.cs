@@ -87,6 +87,19 @@ namespace ExtractionShooter.Gameplay.Session
         /// <summary>Server: the raid instance running now, or null.</summary>
         public RaidInstance ActiveRaid => _matchmaking != null ? _matchmaking.ActiveRaid : null;
 
+        /// <summary>Most players in one raid instance (the server list shows it as the server's size).</summary>
+        public int MaxPlayersPerRaid => _maxPlayersPerRaid;
+
+        /// <summary>
+        /// Dedicated server config override of <see cref="MaxPlayersPerRaid"/> (1–128). Takes effect at once when the
+        /// server is not running yet, otherwise when it next restarts.
+        /// </summary>
+        public void SetMaxPlayersPerRaid(int maxPlayers)
+        {
+            _maxPlayersPerRaid = Mathf.Clamp(maxPlayers, 1, 128);
+            if (!IsServer) ResetState();
+        }
+
         private bool IsServer => _networkManager != null && _networkManager.IsServerStarted;
 
         private void Awake()

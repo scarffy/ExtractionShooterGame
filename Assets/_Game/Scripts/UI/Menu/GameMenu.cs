@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ExtractionShooter.Core.Hosting;
 using ExtractionShooter.Core.Input;
 using ExtractionShooter.Gameplay.Audio;
 using ExtractionShooter.Gameplay.Player;
@@ -23,8 +24,10 @@ namespace ExtractionShooter.UI.Menu
     /// a raid alive (or stopping a server others play on) asks first. While it is open the cursor is free, so gameplay
     /// input reads nothing, and the inventory ignores Tab.</item>
     /// <item>Settings (<see cref="SettingsPanel"/>), from either menu.</item>
+    /// <item>Server browser (<see cref="ServerBrowserPanel"/>), from the main menu: dedicated servers listed on the
+    /// master server; Join connects with the name field.</item>
     /// </list>
-    /// Escape closes the innermost thing first: a key being rebound, the confirm box, settings, the pause menu, then the
+    /// Escape closes the innermost thing first: a key being rebound, the confirm box, settings, the server browser, the pause menu, then the
     /// inventory or map; with nothing open in game it opens the pause menu. Headless servers (batch mode or
     /// UNITY_SERVER) never show it: <c>ServerBootstrap</c> starts the server there.
     /// </summary>
@@ -49,6 +52,9 @@ namespace ExtractionShooter.UI.Menu
         [Tooltip("Address the Join field starts with until the player types another.")]
         [SerializeField] private string _defaultAddress = "localhost";
 
+        [Tooltip("Master server the server browser reads until the player saves another address.")]
+        [SerializeField] private string _defaultMasterUrl = "http://localhost:8080";
+
         private readonly List<(Button Button, Action Handler)> _handlers = new List<(Button, Action)>();
 
         private VisualElement _root;
@@ -72,6 +78,7 @@ namespace ExtractionShooter.UI.Menu
 
         private SessionConnector _connector;
         private SettingsPanel _settings;
+        private ServerBrowserPanel _browser;
         private InputAction _pauseAction;
         private AudioSource _clickSource;
         private Action _confirmAction;
@@ -122,6 +129,9 @@ namespace ExtractionShooter.UI.Menu
             _connector.Changed += Refresh;
             _settings = new SettingsPanel(_root, transform, PlayClick);
             _settings.BackRequested += CloseSettings;
+            _browser = new ServerBrowserPanel(_root, PlayClick, _defaultMasterUrl, Application.version);
+            _browser.BackRequested += CloseBrowser;
+            _browser.JoinRequested += JoinListedServer;
             CursorController.LockChanged += OnCursorLockChanged;
 
             _pauseAction = new InputAction("Pause", InputActionType.Button, "<Keyboard>/escape");
@@ -153,6 +163,12 @@ namespace ExtractionShooter.UI.Menu
                 _settings.BackRequested -= CloseSettings;
                 _settings.Dispose();
             }
+            if (_browser != null)
+            {
+                _browser.BackRequested -= CloseBrowser;
+                _browser.JoinRequested -= JoinListedServer;
+                _browser.Dispose();
+            }
             if (_connector != null)
             {
                 _connector.Changed -= Refresh;
@@ -166,6 +182,7 @@ namespace ExtractionShooter.UI.Menu
         {
             if (!_started) return;
             _connector.Tick();
+            _browser.Tick();
             if (_pauseOpen) RefreshPauseText();
             if (_pauseAction.WasPressedThisFrame()) OnEscape();
         }
@@ -179,6 +196,7 @@ namespace ExtractionShooter.UI.Menu
 
             if (_confirm != null && _confirmAction != null) { CloseConfirm(); return; }
             if (_settings.IsOpen) { CloseSettings(); return; }
+            if (_browser.IsOpen) { CloseBrowser(); return; }
             if (!InGame) return; // main menu: nothing to go back to
 
             if (_pauseOpen) { Resume(); return; }
@@ -209,6 +227,27 @@ namespace ExtractionShooter.UI.Menu
             PlayerPrefs.SetString(AddressKey, address);
             PlayerPrefs.Save();
             _connector.Join(playerName, address, port);
+        }
+
+        /// <summary>Joins a server picked in the server browser, with the name typed in the main menu.</summary>
+        private void JoinListedServer(ServerEntry server)
+        {
+            if (server == null || string.IsNullOrEmpty(server.host) || server.port < 1 || server.port > 65535) return;
+            string error = SessionConnector.ValidateName(_nameField.value, out string playerName);
+            if (error != null)
+            {
+                _browser.ShowMessage(error + " Type it in the main menu (Back).");
+                return;
+            }
+
+            var port = (ushort)server.port;
+            _browser.Close();
+            Remember(playerName, port);
+            _addressField.value = server.host;
+            _portField.value = port.ToString();
+            PlayerPrefs.SetString(AddressKey, server.host);
+            PlayerPrefs.Save();
+            _connector.Join(playerName, server.host, port);
         }
 
         /// <summary>Development: a server with no local player (other editors or builds join it).</summary>
@@ -331,6 +370,21 @@ namespace ExtractionShooter.UI.Menu
             Refresh();
         }
 
+        // ---------------- Server browser ----------------
+
+        private void OpenBrowser()
+        {
+            _localError = string.Empty;
+            _browser.Open();
+            Refresh();
+        }
+
+        private void CloseBrowser()
+        {
+            _browser.Close();
+            Refresh();
+        }
+
         // ---------------- Settings / confirm / quit ----------------
 
         private void OpenSettings()
@@ -386,8 +440,10 @@ namespace ExtractionShooter.UI.Menu
             bool inGame = InGame;
             if (!inGame) _pauseOpen = false;
             bool settingsOpen = _settings.IsOpen;
+            if (inGame && _browser.IsOpen) _browser.Close();
+            bool browserOpen = _browser.IsOpen;
 
-            SetVisible(_mainMenu, !inGame && !settingsOpen);
+            SetVisible(_mainMenu, !inGame && !settingsOpen && !browserOpen);
             SetVisible(_pauseMenu, inGame && _pauseOpen && !settingsOpen);
             SetVisible(_confirm, _confirmAction != null);
 
@@ -426,6 +482,7 @@ namespace ExtractionShooter.UI.Menu
 
             Listen(_root.Q<Button>("menu-host-button"), Host);
             Listen(_root.Q<Button>("menu-join-button"), Join);
+            Listen(_root.Q<Button>("menu-browse-button"), OpenBrowser);
             Listen(_serverButton, StartServerOnly);
             Listen(_root.Q<Button>("menu-settings-button"), OpenSettings);
             Listen(_root.Q<Button>("menu-quit-button"), QuitGame);

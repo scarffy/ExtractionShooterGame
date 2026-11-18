@@ -17,6 +17,7 @@
                             <engine:TextField name="menu-port-field" label="Port" max-length="5" class="menu-field menu-field--port" />
                         </engine:VisualElement>
                         <engine:Button name="menu-join-button" class="menu-button" text="Join game" />
+                        <engine:Button name="menu-browse-button" class="menu-button" text="Browse servers" />
                         <engine:Button name="menu-server-button" class="menu-button menu-button--dev hidden" text="Dedicated server (dev)" />
                         <engine:VisualElement class="menu-divider" />
                         <engine:Button name="menu-settings-button" class="menu-button menu-button--quiet" text="Settings" />
@@ -65,6 +66,42 @@
                 <engine:VisualElement class="settings-footer">
                     <engine:Button name="settings-reset-button" class="menu-button menu-button--quiet" text="Reset to defaults" />
                     <engine:Button name="settings-back-button" class="menu-button menu-button--primary" text="Back" />
+                </engine:VisualElement>
+            </engine:VisualElement>
+        </engine:VisualElement>
+
+        <!-- Server browser: dedicated servers listed on the master server. Rows are added by ServerBrowserPanel. -->
+        <engine:VisualElement name="server-browser" class="menu-screen menu-screen--overlay hidden">
+            <engine:VisualElement class="menu-panel browser-panel">
+                <engine:VisualElement class="settings-header">
+                    <engine:Label class="menu-heading" text="SERVERS" />
+                    <engine:Label name="browser-count" class="menu-note browser-count" />
+                </engine:VisualElement>
+                <engine:VisualElement class="browser-toolbar">
+                    <engine:TextField name="browser-master-field" label="Master server" class="menu-field browser-master" />
+                    <engine:Button name="browser-refresh-button" class="menu-button browser-refresh" text="Refresh" />
+                </engine:VisualElement>
+                <engine:VisualElement class="browser-toolbar">
+                    <engine:TextField name="browser-search-field" label="Search" class="menu-field browser-search" />
+                    <engine:DropdownField name="browser-region-field" class="browser-dropdown" />
+                    <engine:DropdownField name="browser-sort-field" class="browser-dropdown" />
+                    <engine:Toggle name="browser-versions-toggle" label="Show other versions" class="browser-toggle" />
+                </engine:VisualElement>
+                <engine:VisualElement class="browser-row browser-header">
+                    <engine:Label class="browser-cell browser-col--name" text="SERVER" />
+                    <engine:Label class="browser-cell browser-col--map" text="MAP" />
+                    <engine:Label class="browser-cell browser-col--difficulty" text="DIFFICULTY" />
+                    <engine:Label class="browser-cell browser-col--players" text="PLAYERS" />
+                    <engine:Label class="browser-cell browser-col--raid" text="RAID" />
+                    <engine:Label class="browser-cell browser-col--region" text="REGION" />
+                    <engine:Label class="browser-cell browser-col--ping" text="PING" />
+                    <engine:VisualElement class="browser-join browser-join--spacer" />
+                </engine:VisualElement>
+                <engine:ScrollView name="browser-list" class="browser-list" horizontal-scroller-visibility="Hidden" />
+                <engine:Label name="browser-status" class="menu-note browser-status" />
+                <engine:VisualElement class="settings-footer">
+                    <engine:Label class="menu-note" text="Join uses the player name from the main menu  ·  The list refreshes every 15 s" />
+                    <engine:Button name="browser-back-button" class="menu-button menu-button--primary" text="Back" />
                 </engine:VisualElement>
             </engine:VisualElement>
         </engine:VisualElement>

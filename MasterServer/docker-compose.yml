@@ -1,0 +1,39 @@
+# Master server behind Caddy (automatic HTTPS via Let's Encrypt).
+# Needs a .env next to this file with MASTER_DOMAIN and SERVER_TOKEN (copy .env.example).
+#   docker compose up -d --build
+services:
+  master:
+    build: .
+    restart: unless-stopped
+    init: true
+    environment:
+      SERVER_TOKEN: ${SERVER_TOKEN:?set SERVER_TOKEN in .env}
+      TRUST_PROXY: "1"          # Caddy sets X-Forwarded-For to the real client address
+      TTL_SECONDS: ${TTL_SECONDS:-30}
+      MAX_SERVERS: ${MAX_SERVERS:-500}
+      RATE_HEARTBEAT_PER_MIN: ${RATE_HEARTBEAT_PER_MIN:-60}
+      RATE_LIST_PER_MIN: ${RATE_LIST_PER_MIN:-30}
+    expose:
+      - "8080"                  # only reachable through Caddy, not published on the host
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - master
+    ports:
+      - "80:80"                 # Let's Encrypt HTTP challenge + redirect to HTTPS
+      - "443:443"
+    environment:
+      MASTER_DOMAIN: ${MASTER_DOMAIN:?set MASTER_DOMAIN in .env}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data        # certificates; keep this volume
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,5 @@
+# Used by docker-compose.yml. MASTER_DOMAIN comes from .env (e.g. master.example.com).
+{$MASTER_DOMAIN} {
+	encode gzip
+	reverse_proxy master:8080
+}

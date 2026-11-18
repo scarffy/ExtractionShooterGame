@@ -93,6 +93,9 @@ namespace ExtractionShooter.Gameplay.Session
         /// <summary>The local client's session, or null.</summary>
         public static PlayerSession Local { get; private set; }
 
+        /// <summary>Server: players signed in right now (hideout or raid), e.g. for the server list.</summary>
+        public static int ServerSignedInCount => ServerNamesInUse.Count;
+
         public static event Action<PlayerSession> LocalSessionChanged;
 
         /// <summary>Client side: state, name or opened bag changed.</summary>

@@ -417,3 +417,181 @@
     border-color: rgb(240, 120, 90);
     color: rgb(240, 150, 120);
 }
+
+/* ---------- Server browser ---------- */
+
+.browser-panel {
+    width: 1280px;
+    height: 820px;
+}
+
+.browser-count {
+    margin: 0;
+}
+
+.browser-toolbar {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.browser-master {
+    flex-grow: 1;
+    margin-right: 12px;
+}
+
+.browser-search {
+    flex-grow: 1;
+    margin-right: 12px;
+}
+
+.menu-field.browser-search .unity-base-field__label {
+    min-width: 70px;
+    width: 70px;
+}
+
+.browser-refresh {
+    width: 140px;
+    margin-top: 8px;
+}
+
+.browser-dropdown {
+    width: 170px;
+    margin: 8px 12px 0 0;
+    font-size: 15px;
+}
+
+.browser-dropdown .unity-base-popup-field__input {
+    height: 34px;
+    border-radius: 4px;
+    border-color: rgba(255, 255, 255, 0.16);
+    background-color: rgb(12, 14, 17);
+    color: rgb(240, 236, 220);
+}
+
+.browser-toggle {
+    margin: 8px 0 0 0;
+    font-size: 15px;
+    color: rgba(230, 225, 210, 0.75);
+}
+
+.browser-toggle .unity-toggle__checkmark {
+    background-color: rgb(12, 14, 17);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.browser-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 48px;
+    padding: 0 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.browser-row:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.browser-header {
+    min-height: 30px;
+    margin-top: 10px;
+    border-bottom-color: rgba(255, 255, 255, 0.14);
+}
+
+.browser-header:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.browser-header .browser-cell {
+    color: rgba(230, 225, 210, 0.55);
+    font-size: 12px;
+    -unity-font-style: bold;
+    letter-spacing: 2px;
+}
+
+.browser-row--other-version {
+    opacity: 0.55;
+}
+
+.browser-cell {
+    padding-right: 10px;
+    color: rgb(230, 225, 210);
+    font-size: 15px;
+    overflow: hidden;
+    -unity-text-overflow-position: end;
+    text-overflow: ellipsis;
+}
+
+.browser-col--name {
+    flex-grow: 1;
+    flex-basis: 0;
+    min-width: 200px;
+}
+
+.browser-name {
+    color: rgb(240, 236, 220);
+    font-size: 16px;
+    -unity-font-style: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.browser-detail {
+    color: rgba(230, 225, 210, 0.45);
+    font-size: 12px;
+}
+
+.browser-row--other-version .browser-detail {
+    color: rgb(240, 150, 120);
+}
+
+.browser-col--map {
+    width: 130px;
+}
+
+.browser-col--difficulty {
+    width: 120px;
+}
+
+.browser-col--players {
+    width: 90px;
+    -unity-text-align: middle-center;
+}
+
+.browser-col--raid {
+    width: 270px;
+}
+
+.browser-col--region {
+    width: 80px;
+    -unity-text-align: middle-center;
+}
+
+.browser-col--ping {
+    width: 80px;
+    -unity-text-align: middle-right;
+}
+
+.browser-join {
+    width: 130px;
+    height: 34px;
+    margin: 0 0 0 10px;
+}
+
+.browser-join--spacer {
+    height: 1px;
+}
+
+.browser-list {
+    flex-grow: 1;
+}
+
+.browser-status {
+    min-height: 22px;
+    margin-top: 8px;
+}
+
+.browser-status--error {
+    color: rgb(240, 120, 90);
+}
