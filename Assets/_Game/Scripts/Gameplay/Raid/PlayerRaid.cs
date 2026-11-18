@@ -58,6 +58,9 @@ namespace ExtractionShooter.Gameplay.Raid
 
         public float ExtractProgress => _extractPercent.Value / 100f;
 
+        /// <summary>Seconds a full extraction takes (the same on every peer: a prefab setting).</summary>
+        public float ExtractSeconds => _extractSeconds;
+
         public bool IsExtracting => !string.IsNullOrEmpty(_zoneName.Value);
 
         /// <summary>Server: seconds since this character entered the raid.</summary>

@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 namespace ExtractionShooter.UI.Inventory
 {
-    /// <summary>Top-centre raid HUD: time left, and extraction progress while in an extraction zone.</summary>
+    /// <summary>Top-centre raid HUD: difficulty and time left.</summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(UIDocument))]
     public sealed class RaidHudView : MonoBehaviour
@@ -53,9 +53,7 @@ namespace ExtractionShooter.UI.Inventory
 
             int seconds = Mathf.Max(0, _raid.SecondsLeft);
             string time = $"{_raid.Difficulty.DisplayName().ToUpperInvariant()}   {seconds / 60:00}:{seconds % 60:00}";
-            _label.text = _raid.IsExtracting
-                ? $"{time}     Extracting at {_raid.ZoneName}  {Mathf.RoundToInt(_raid.ExtractProgress * 100f)}%"
-                : time;
+            _label.text = time; // extraction has its own centre prompt (ExtractHudView)
             _label.EnableInClassList(WarningClass, seconds <= WarningSeconds);
         }
     }

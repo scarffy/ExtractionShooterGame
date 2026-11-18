@@ -2,6 +2,13 @@
     <Style src="project://database/Assets/_Game/UI/Inventory/InventoryScreen.uss?fileID=7433441132597879392&amp;guid=49794000554d4855b52d6d86485236b3&amp;type=3#InventoryScreen" />
     <engine:VisualElement name="hud-layer" class="hud-layer" picking-mode="Ignore">
         <engine:Label name="raid-hud" class="raid-hud hidden" picking-mode="Ignore" />
+        <engine:VisualElement name="extract-hud" class="extract-hud hidden" picking-mode="Ignore">
+            <engine:VisualElement name="extract-ring" class="extract-ring" picking-mode="Ignore">
+                <engine:Label name="extract-countdown" class="extract-countdown" picking-mode="Ignore" />
+            </engine:VisualElement>
+            <engine:Label name="extract-title" class="extract-title" picking-mode="Ignore" />
+            <engine:Label name="extract-detail" class="extract-detail" picking-mode="Ignore" />
+        </engine:VisualElement>
         <engine:Label name="interaction-prompt" class="interaction-prompt hidden" picking-mode="Ignore" />
         <engine:VisualElement name="equipment-hud" class="equipment-hud hidden" picking-mode="Ignore">
             <engine:Label name="ammo-hud" class="equipment-hud__line equipment-hud__line--ammo" picking-mode="Ignore" />
@@ -84,6 +91,7 @@
             </engine:VisualElement>
         </engine:VisualElement>
         <engine:Label name="item-details" class="item-details" picking-mode="Ignore" />
+        <engine:Label name="inventory-notice" class="inventory-notice" picking-mode="Ignore" />
         <engine:Label name="inventory-hint" class="inventory-hint" text="Click: move stack   ·   Alt+click: move one   ·   Drag: place in a slot   ·   Right-click: open bag / use medical / remove attachment   ·   Drop an attachment on a weapon to fit it   ·   Tab / Esc: close" picking-mode="Ignore" />
     </engine:VisualElement>
     <engine:VisualElement name="hideout-screen" class="inventory-screen hideout-screen hidden">
