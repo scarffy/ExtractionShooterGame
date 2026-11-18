@@ -28,3 +28,4 @@ MonoBehaviour:
   _muzzleVelocityMultiplier: 1.04
   _width: 1
   _height: 1
+  _weight: 0.012

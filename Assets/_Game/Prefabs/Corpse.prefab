@@ -49,6 +49,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  <AssetPathHash>k__BackingField: 18111551117920186163
 --- !u!114 &766046564494669513
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62,8 +63,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _displayName: Body
-  _capacity: 48
-  _gridWidth: 8
+  _capacity: 100
+  _gridWidth: 10
   _access: 1
   _slotRules: 0
   _accessRange: 3

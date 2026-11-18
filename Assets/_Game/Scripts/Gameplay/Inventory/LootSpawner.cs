@@ -24,6 +24,24 @@ namespace ExtractionShooter.Gameplay.Inventory
                 Debug.LogError($"[{nameof(LootSpawner)}] Loot table is not assigned on {name}.", this);
         }
 
+        /// <summary>The table this container is filled from.</summary>
+        public LootTable LootTable => _lootTable;
+
+        /// <summary>
+        /// Server, before spawning: fills this container from another table (world loot points use it for
+        /// high-tier and medical crates). Ignored once spawned (it is already filled) or for a null table.
+        /// </summary>
+        public void ServerOverrideLootTable(LootTable table)
+        {
+            if (table == null) return;
+            if (IsSpawned)
+            {
+                Debug.LogError($"[{nameof(LootSpawner)}] The loot table must be set before {name} is spawned.", this);
+                return;
+            }
+            _lootTable = table;
+        }
+
         public override void OnStartServer()
         {
             base.OnStartServer();

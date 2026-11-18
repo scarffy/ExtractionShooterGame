@@ -30,6 +30,9 @@ namespace ExtractionShooter.Gameplay.Combat
         /// <summary>Server only. Raised when health reaches zero.</summary>
         public event Action<DamageInfo> ServerDied;
 
+        /// <summary>Server only. Any player's or bot's health reached zero (kill tracking).</summary>
+        public static event Action<Health, DamageInfo> ServerAnyDied;
+
         public int Current => _current.Value;
         public int Max => _maxHealth;
         public bool IsAlive => _current.Value > 0;
@@ -69,7 +72,7 @@ namespace ExtractionShooter.Gameplay.Combat
             _current.Value = Mathf.Max(0, _current.Value - applied.Amount);
             ServerDamaged?.Invoke(applied);
 
-            if (!IsAlive) ServerDied?.Invoke(applied);
+            if (!IsAlive) RaiseDied(applied);
         }
 
         /// <summary>
@@ -82,7 +85,7 @@ namespace ExtractionShooter.Gameplay.Combat
 
             _current.Value = Mathf.Max(0, _current.Value - damage.Amount);
             ServerDamaged?.Invoke(damage);
-            if (!IsAlive) ServerDied?.Invoke(damage);
+            if (!IsAlive) RaiseDied(damage);
         }
 
         /// <summary>Server only. Heals up to max health. Returns the amount healed.</summary>
@@ -101,7 +104,7 @@ namespace ExtractionShooter.Gameplay.Combat
             if (!IsServerInitialized || !IsAlive) return;
 
             _current.Value = 0;
-            ServerDied?.Invoke(cause);
+            RaiseDied(cause);
         }
 
         /// <summary>Server only. Restores full health.</summary>
@@ -117,5 +120,14 @@ namespace ExtractionShooter.Gameplay.Combat
             if (asServer && IsClientInitialized) return;
             Changed?.Invoke(previous, current);
         }
+
+        private void RaiseDied(in DamageInfo cause)
+        {
+            ServerDied?.Invoke(cause);
+            ServerAnyDied?.Invoke(this, cause);
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticEvents() => ServerAnyDied = null;
     }
 }

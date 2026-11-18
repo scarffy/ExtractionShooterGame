@@ -9,6 +9,8 @@ namespace ExtractionShooter.Gameplay.Inventory
     /// Server only: creates and destroys item instances with their per-instance state.
     /// Armor starts at full durability; bags get a freshly spawned storage container.
     /// Every item that may carry state must be created here, never with a bare <see cref="ItemStack"/>.
+    /// Bag storage is spawned server-owned and private: nobody receives its contents until the bag is placed in a
+    /// container, after which they go to whoever owns that container's contents (see <see cref="ItemContainer"/>).
     /// </summary>
     public static class ItemFactory
     {
@@ -37,6 +39,7 @@ namespace ExtractionShooter.Gameplay.Inventory
                     ItemContainer storage = Object.Instantiate(bag.StoragePrefab);
                     storage.name = $"{bag.DisplayName} Storage";
                     storage.ServerConfigure(bag.Capacity, bag.DisplayName, bag.GridWidth);
+                    // No owner: visibility follows the container holding the bag, not FishNet ownership.
                     networkManager.ServerManager.Spawn(storage.NetworkObject);
                     return new ItemStack(bag.Id, 1, 0, ItemStack.ToContentsHandle(storage.ObjectId));
                 }

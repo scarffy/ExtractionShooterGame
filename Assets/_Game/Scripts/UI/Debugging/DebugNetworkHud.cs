@@ -1,5 +1,6 @@
 using ExtractionShooter.Core.Input;
 using ExtractionShooter.Gameplay.Player;
+using ExtractionShooter.Gameplay.Session;
 using FishNet.Managing;
 using UnityEngine;
 
@@ -85,6 +86,14 @@ namespace ExtractionShooter.UI.Debugging
 
                 return;
             }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // Host testing: credits to buy gear without grinding raids.
+            PlayerSession session = PlayerSession.Local;
+            if (serverStarted && session != null && session.State == SessionState.Hideout && session.Trading != null &&
+                GUILayout.Button("Dev: +10,000 cr", GUILayout.Height(ButtonHeight)))
+                session.Trading.ServerDevGrant(10000);
+#endif
 
             if (PlayerCharacter.Local != null && GUILayout.Button("Resume", GUILayout.Height(ButtonHeight)))
                 CursorController.SetLocked(true);

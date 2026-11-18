@@ -49,6 +49,9 @@ namespace ExtractionShooter.Gameplay.Weapons
         /// <summary>Client side. Raised for every confirmed projectile (origin, end point).</summary>
         public event Action<Vector3, Vector3> ShotConfirmed;
 
+        /// <summary>Owner only: raised the moment a shot is requested (before the server confirms it), for first-person effects.</summary>
+        public event Action OwnerShotFired;
+
         private void Awake()
         {
             _character = GetComponent<PlayerCharacter>();
@@ -92,6 +95,7 @@ namespace ExtractionShooter.Gameplay.Weapons
             _unconfirmedShots++;
             RequestShot(_character.Look.EyePosition, _character.Look.AimDirection);
             KickView(weapon, item, now);
+            OwnerShotFired?.Invoke();
         }
 
         /// <summary>Owner: kicks the camera by the next step of the weapon's recoil pattern.</summary>

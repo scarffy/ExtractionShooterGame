@@ -7,6 +7,8 @@ namespace ExtractionShooter.Gameplay.Inventory
     /// <summary>
     /// Server only: fills an equipment container (a player's worn gear, or a stash loadout) and its bags.
     /// Equippables go to their slot; everything else goes into the chest rig, then the backpack.
+    /// Who may see a bag's contents follows the container it is put in, so filling a session loadout shows the bags
+    /// to that player only, and moving gear between containers (<see cref="ServerMoveAll"/>) moves visibility with it.
     /// </summary>
     public static class LoadoutBuilder
     {

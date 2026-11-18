@@ -4,16 +4,15 @@ using UnityEngine;
 namespace ExtractionShooter.Gameplay.Player
 {
     /// <summary>
-    /// Matches the body to the motor's stance on every peer. Crouching scales the body down and lowers the visor,
-    /// the head and body hitboxes (instantly, so the server's hit checks match) and the camera point (smoothly, so the
-    /// owner's view does not snap). All parts are scaled by crouching height / standing height around the feet.
+    /// Matches the hitboxes and the camera to the motor's stance on every peer. Crouching lowers the head and body
+    /// hitboxes (instantly, so the server's hit checks match) and the camera point (smoothly, so the owner's view does not
+    /// snap), scaled by crouching height / standing height around the feet. The visible body poses itself to match
+    /// (<see cref="Visuals.CharacterBody"/>, fed by <see cref="PlayerVisuals"/> with <see cref="CrouchHeightRatio"/>).
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerMotor))]
     public sealed class PlayerStance : NetworkBehaviour
     {
-        [SerializeField] private Transform _body;
-        [SerializeField] private Transform _visor;
         [SerializeField] private Transform _headHitbox;
         [SerializeField] private Transform _bodyHitbox;
         [SerializeField] private Transform _legsHitbox;
@@ -24,14 +23,22 @@ namespace ExtractionShooter.Gameplay.Player
         [SerializeField, Min(0.1f)] private float _viewLerpSpeed = 10f;
 
         private PlayerMotor _motor;
-        private Vector3 _bodyPosition, _bodyScale, _visorPosition, _headPosition, _bodyHitboxScale, _legsHitboxScale, _viewPosition;
+        private Vector3 _headPosition, _bodyHitboxScale, _legsHitboxScale, _viewPosition;
         private float _ratio = 1f;
+
+        /// <summary>Crouched height / standing height from the movement settings (what the hitboxes scale by when crouched).</summary>
+        public float CrouchHeightRatio
+        {
+            get
+            {
+                MovementSettings settings = _motor != null ? _motor.Settings : null;
+                return settings != null && settings.StandingHeight > 0f ? settings.CrouchingHeight / settings.StandingHeight : 1f;
+            }
+        }
 
         private void Awake()
         {
             _motor = GetComponent<PlayerMotor>();
-            if (_body != null) { _bodyPosition = _body.localPosition; _bodyScale = _body.localScale; }
-            if (_visor != null) _visorPosition = _visor.localPosition;
             if (_headHitbox != null) _headPosition = _headHitbox.localPosition;
             if (_bodyHitbox != null) _bodyHitboxScale = _bodyHitbox.localScale;
             if (_legsHitbox != null) _legsHitboxScale = _legsHitbox.localScale;
@@ -53,15 +60,7 @@ namespace ExtractionShooter.Gameplay.Player
 
         private void Apply()
         {
-            MovementSettings settings = _motor.Settings;
-            _ratio = _motor.IsCrouched && settings != null ? settings.CrouchingHeight / settings.StandingHeight : 1f;
-
-            if (_body != null)
-            {
-                _body.localPosition = Scaled(_bodyPosition, _ratio);
-                _body.localScale = new Vector3(_bodyScale.x, _bodyScale.y * _ratio, _bodyScale.z);
-            }
-            if (_visor != null) _visor.localPosition = Scaled(_visorPosition, _ratio);
+            _ratio = _motor.IsCrouched ? CrouchHeightRatio : 1f;
             if (_headHitbox != null) _headHitbox.localPosition = Scaled(_headPosition, _ratio);
             if (_bodyHitbox != null) _bodyHitbox.localScale = new Vector3(_bodyHitboxScale.x, _bodyHitboxScale.y * _ratio, _bodyHitboxScale.z);
             if (_legsHitbox != null) _legsHitbox.localScale = new Vector3(_legsHitboxScale.x, _legsHitboxScale.y * _ratio, _legsHitboxScale.z);

@@ -853,3 +853,109 @@
     margin: 0 0 0 8px;
     font-size: 13px;
 }
+
+.character-weight {
+    color: rgb(225, 220, 205);
+    font-size: 18px;
+    -unity-font-style: bold;
+}
+
+.character-weight--heavy {
+    color: rgb(240, 200, 90);
+}
+
+.character-weight--overloaded {
+    color: rgb(240, 110, 90);
+}
+
+/* ---------- End-of-raid summary (over the hideout) ---------- */
+
+.raid-summary {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(6, 8, 10, 0.82);
+}
+
+.raid-summary__panel {
+    width: 560px;
+    padding: 28px 32px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: rgba(230, 190, 90, 0.5);
+    background-color: rgb(22, 26, 30);
+}
+
+.raid-summary__caption {
+    color: rgba(230, 225, 210, 0.55);
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.raid-summary__result {
+    margin-top: 6px;
+    color: rgb(240, 236, 220);
+    font-size: 36px;
+    -unity-font-style: bold;
+}
+
+.raid-summary__result--success {
+    color: rgb(140, 210, 110);
+}
+
+.raid-summary__result--failed {
+    color: rgb(240, 110, 90);
+}
+
+.raid-summary__time {
+    margin-bottom: 18px;
+    color: rgba(230, 225, 210, 0.7);
+    font-size: 16px;
+}
+
+.raid-summary__row {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom-width: 1px;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.raid-summary__row--total {
+    border-bottom-width: 0;
+    margin-top: 6px;
+}
+
+.raid-summary__label {
+    color: rgba(230, 225, 210, 0.8);
+    font-size: 17px;
+}
+
+.raid-summary__value {
+    color: rgb(240, 236, 220);
+    font-size: 17px;
+    -unity-font-style: bold;
+}
+
+.raid-summary__value--gain {
+    color: rgb(140, 210, 110);
+}
+
+.raid-summary__value--loss {
+    color: rgb(240, 110, 90);
+}
+
+.raid-summary__note {
+    margin-top: 14px;
+    color: rgba(230, 225, 210, 0.5);
+    font-size: 13px;
+}
+
+.raid-summary .deploy-button {
+    align-self: flex-end;
+    margin-top: 18px;
+}

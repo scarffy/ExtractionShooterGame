@@ -26,3 +26,4 @@ MonoBehaviour:
   _armorDamagePercent: 20
   _width: 2
   _height: 1
+  _weight: 0.3

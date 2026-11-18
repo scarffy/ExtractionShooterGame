@@ -145,7 +145,8 @@ namespace ExtractionShooter.Gameplay.Player
         private void HandleTick()
         {
             // IsClientInitialized: on a host the server side despawns first; the client side must stop sending.
-            if (IsOwner && IsClientInitialized)
+            // IsSpawned: the tick the character is despawned must not send input either.
+            if (IsOwner && IsClientInitialized && IsSpawned)
                 SubmitInput(BuildInputFrame());
 
             if (IsServerInitialized)

@@ -24,6 +24,9 @@ namespace ExtractionShooter.Gameplay.Inventory
         [Tooltip("Value per unit, used for scoring and trading.")]
         [SerializeField, Min(0)] private int _value;
 
+        [Tooltip("Weight per unit in kilograms (a round of ammo, one medkit...).")]
+        [SerializeField, Min(0f)] private float _weight = 0.1f;
+
         [Header("Grid size (cells, unrotated)")]
         [SerializeField, Min(1)] private int _width = 1;
         [SerializeField, Min(1)] private int _height = 1;
@@ -36,6 +39,7 @@ namespace ExtractionShooter.Gameplay.Inventory
         /// <summary>Max quantity per slot. Items with per-instance state always return 1.</summary>
         public virtual int MaxStack => Mathf.Max(1, _maxStack);
         public int Value => _value;
+        public float Weight => _weight;
 
         /// <summary>Cells the item covers in a grid inventory, unrotated.</summary>
         public ItemSize Size => new ItemSize(_width, _height);

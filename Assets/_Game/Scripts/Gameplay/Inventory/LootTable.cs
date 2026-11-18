@@ -1,20 +1,26 @@
 using System;
 using System.Collections.Generic;
+using ExtractionShooter.Core.Inventory;
+using ExtractionShooter.Gameplay.Weapons;
 using UnityEngine;
 
 namespace ExtractionShooter.Gameplay.Inventory
 {
-    /// <summary>One rolled result: an item type and how many.</summary>
+    /// <summary>One rolled result: an item type, how many, and the attachments fitted to a rolled weapon.</summary>
     public readonly struct LootDrop
     {
-        public LootDrop(ItemDefinition definition, int quantity)
+        public LootDrop(ItemDefinition definition, int quantity, string attachments = null)
         {
             Definition = definition;
             Quantity = quantity;
+            Attachments = attachments;
         }
 
         public ItemDefinition Definition { get; }
         public int Quantity { get; }
+
+        /// <summary>Attachments in item-stack form (<see cref="WeaponMods"/>), or null.</summary>
+        public string Attachments { get; }
     }
 
     /// <summary>
@@ -49,7 +55,8 @@ namespace ExtractionShooter.Gameplay.Inventory
                     if (!entry.IsValid) continue;
                     if (pick < entry.Weight)
                     {
-                        results.Add(new LootDrop(entry.Item, random.Next(entry.MinQuantity, entry.MaxQuantity + 1)));
+                        results.Add(new LootDrop(entry.Item, random.Next(entry.MinQuantity, entry.MaxQuantity + 1),
+                            entry.AttachmentsText));
                         break;
                     }
                     pick -= entry.Weight;
@@ -72,10 +79,26 @@ namespace ExtractionShooter.Gameplay.Inventory
         [SerializeField, Min(1)] private int _minQuantity = 1;
         [SerializeField, Min(1)] private int _maxQuantity = 1;
 
+        [Tooltip("Weapons only: attachments the weapon comes fitted with (ones that don't fit are skipped).")]
+        [SerializeField] private List<AttachmentDefinition> _attachments = new List<AttachmentDefinition>();
+
         public ItemDefinition Item => _item;
         public int Weight => _weight;
         public int MinQuantity => Mathf.Max(1, _minQuantity);
         public int MaxQuantity => Mathf.Max(MinQuantity, _maxQuantity);
         public bool IsValid => _item != null && !string.IsNullOrEmpty(_item.Id) && _weight > 0;
+
+        /// <summary>The fitted attachments in item-stack form, or null (none, or the item is not a weapon).</summary>
+        public string AttachmentsText
+        {
+            get
+            {
+                if (_attachments == null || _attachments.Count == 0 || !(_item is WeaponDefinition weapon)) return null;
+                string text = null;
+                foreach (AttachmentDefinition mod in _attachments)
+                    if (mod != null && mod.Fits(weapon)) text = WeaponMods.Set(text, mod.Slot, mod.Id);
+                return text;
+            }
+        }
     }
 }

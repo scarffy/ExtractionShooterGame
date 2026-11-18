@@ -25,6 +25,7 @@ namespace ExtractionShooter.Gameplay.Inventory
                 {
                     ItemStack item = ItemFactory.ServerCreate(networkManager, drop.Definition, quantity);
                     if (item.IsEmpty) continue;
+                    if (!string.IsNullOrEmpty(drop.Attachments)) item = item.WithAttachments(drop.Attachments);
 
                     inventory.TryAdd(item, out int added);
                     if (added == 0)

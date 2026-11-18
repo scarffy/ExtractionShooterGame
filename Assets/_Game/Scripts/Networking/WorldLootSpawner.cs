@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using ExtractionShooter.Core.Matchmaking;
+using ExtractionShooter.Gameplay.Inventory;
+using ExtractionShooter.Gameplay.Raid;
 using ExtractionShooter.Gameplay.Session;
 using FishNet.Managing;
 using FishNet.Object;
@@ -12,6 +14,8 @@ namespace ExtractionShooter.Networking
     /// Server only: spawns a networked loot container at each child point when the server starts.
     /// Containers are spawned at runtime (not placed as scene objects) so every raid gets fresh loot: each raid
     /// instance after the first replaces them (their remaining contents go with them).
+    /// A point with a <see cref="LootPoint"/> gets that point's loot table and container name (high-tier crates,
+    /// medical boxes); other points get the prefab's defaults.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class WorldLootSpawner : MonoBehaviour
@@ -92,8 +96,29 @@ namespace ExtractionShooter.Networking
             {
                 if (point == null) continue;
                 NetworkObject container = Instantiate(_containerPrefab, point.position, point.rotation);
+                ApplyPointSettings(point, container);
                 _networkManager.ServerManager.Spawn(container);
                 _containers.Add(container);
+            }
+        }
+
+        /// <summary>Before spawning: the point's loot table and name, if it has a <see cref="LootPoint"/>.</summary>
+        private static void ApplyPointSettings(Transform point, NetworkObject container)
+        {
+            LootPoint settings = point.GetComponent<LootPoint>();
+            if (settings == null) return;
+
+            if (settings.LootTable != null)
+            {
+                LootSpawner spawner = container.GetComponent<LootSpawner>();
+                if (spawner != null) spawner.ServerOverrideLootTable(settings.LootTable);
+            }
+
+            ItemContainer inventory = container.GetComponent<ItemContainer>();
+            if (inventory != null && !string.IsNullOrEmpty(settings.DisplayName))
+            {
+                inventory.ServerConfigure(inventory.Capacity, settings.DisplayName, inventory.GridWidth);
+                container.name = settings.DisplayName;
             }
         }
 

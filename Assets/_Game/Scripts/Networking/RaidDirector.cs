@@ -2,8 +2,11 @@ using System.Collections;
 using System.Collections.Generic;
 using ExtractionShooter.Core.Combat;
 using ExtractionShooter.Core.Matchmaking;
+using ExtractionShooter.Core.Raid;
 using ExtractionShooter.Core.Spawning;
 using ExtractionShooter.Gameplay.AI;
+using ExtractionShooter.Gameplay.Combat;
+using ExtractionShooter.Gameplay.Inventory;
 using ExtractionShooter.Gameplay.Player;
 using ExtractionShooter.Gameplay.Raid;
 using ExtractionShooter.Gameplay.Session;
@@ -40,6 +43,20 @@ namespace ExtractionShooter.Networking
         [SerializeField, Min(0.5f)] private float _squadSpacing = 1.5f;
 
         private readonly Dictionary<PlayerCharacter, PlayerSession> _raids = new Dictionary<PlayerCharacter, PlayerSession>();
+
+        /// <summary>Per-character stats for the end-of-raid summary.</summary>
+        private sealed class RaidRecord
+        {
+            public double StartedAt;
+            public double EndsAt;
+            public long DeployedValue;
+            public int PlayerKills;
+            public int BotKills;
+            public int KillerClientId = DamageInfo.NoInstigator;
+        }
+
+        private readonly Dictionary<PlayerCharacter, RaidRecord> _records = new Dictionary<PlayerCharacter, RaidRecord>();
+        private readonly Dictionary<int, string> _namesByClient = new Dictionary<int, string>();
         private readonly HashSet<PlayerCharacter> _ending = new HashSet<PlayerCharacter>();
         private readonly List<Vector3> _threats = new List<Vector3>();
         private ISpawnPointProvider _spawnPoints;
@@ -71,14 +88,24 @@ namespace ExtractionShooter.Networking
         {
             if (_networkManager != null)
                 _networkManager.SceneManager.OnClientLoadedStartScenes += HandleClientLoadedStartScenes;
-            if (_lobby != null) _lobby.ServerSquadDeploying += DeploySquad;
+            if (_lobby != null)
+            {
+                _lobby.ServerSquadDeploying += DeploySquad;
+                _lobby.ServerRaidOpened += ClearLastRaid;
+            }
+            Health.ServerAnyDied += CountKill;
         }
 
         private void OnDestroy()
         {
             if (_networkManager != null && _networkManager.SceneManager != null)
                 _networkManager.SceneManager.OnClientLoadedStartScenes -= HandleClientLoadedStartScenes;
-            if (_lobby != null) _lobby.ServerSquadDeploying -= DeploySquad;
+            if (_lobby != null)
+            {
+                _lobby.ServerSquadDeploying -= DeploySquad;
+                _lobby.ServerRaidOpened -= ClearLastRaid;
+            }
+            Health.ServerAnyDied -= CountKill;
 
             foreach (PlayerCharacter character in new List<PlayerCharacter>(_raids.Keys))
                 Unsubscribe(character);
@@ -112,6 +139,14 @@ namespace ExtractionShooter.Networking
             }
         }
 
+        /// <summary>A new raid starts: bodies and dropped loot from the last one go, so they can't be looted again.</summary>
+        private void ClearLastRaid(RaidInstance raid)
+        {
+            if (raid == null || raid.Id <= 1) return;
+            int cleared = NetworkLifetime.ServerDespawnAll();
+            if (cleared > 0) Debug.Log($"[{nameof(RaidDirector)}] Raid #{raid.Id}: cleared {cleared} leftover object(s) (bodies, drops) from the last raid.");
+        }
+
         private bool Deploy(PlayerSession session, Pose pose, RaidInstance raid, int squadId)
         {
             if (session == null || !session.IsSpawned || session.State != SessionState.Hideout || _raids.ContainsValue(session)) return false;
@@ -127,6 +162,13 @@ namespace ExtractionShooter.Networking
             if (squad != null) squad.ServerAssign(squadId, session.PlayerName);
 
             session.ServerBeginRaid(character);
+            _records[character] = new RaidRecord
+            {
+                StartedAt = Time.timeAsDouble,
+                EndsAt = raid.EndTime,
+                DeployedValue = CarriedValue(character),
+            };
+            if (session.Owner != null) _namesByClient[session.Owner.ClientId] = session.PlayerName;
             Debug.Log($"[{nameof(RaidDirector)}] {session.PlayerName} deployed into raid #{raid.Id} (squad {squadId}) at {pose.position}.");
             return true;
         }
@@ -155,7 +197,8 @@ namespace ExtractionShooter.Networking
             {
                 if (character != null && !character.Health.IsAlive && _ending.Add(character))
                 {
-                    string killer = cause.InstigatorClientId == DamageInfo.NoInstigator ? "a bot or the world" : $"client {cause.InstigatorClientId}";
+                    if (_records.TryGetValue(character, out RaidRecord record)) record.KillerClientId = cause.InstigatorClientId;
+                    string killer = cause.InstigatorClientId == DamageInfo.NoInstigator ? "a bot or the world" : NameOf(cause.InstigatorClientId);
                     Debug.Log($"[{nameof(RaidDirector)}] {_raids[character].PlayerName} was killed by {killer}.");
                     Unsubscribe(character);
                     StartCoroutine(EndRaidAfterDelay(character));
@@ -179,8 +222,16 @@ namespace ExtractionShooter.Networking
 
             if (extracted && session != null) Debug.Log($"[{nameof(RaidDirector)}] {session.PlayerName} extracted.");
 
+            // The summary reads the gear before it moves back to the hideout.
+            RaidSummary summary = BuildSummary(character, extracted);
+            _records.Remove(character);
+
             // Gear moves first: despawning the character destroys whatever it still carries.
-            if (session != null && session.IsSpawned) session.ServerEndRaid(extracted);
+            if (session != null && session.IsSpawned)
+            {
+                session.ServerEndRaid(extracted);
+                session.ServerSendRaidSummary(summary);
+            }
             if (character.IsSpawned) _networkManager.ServerManager.Despawn(character.NetworkObject);
         }
 
@@ -193,8 +244,60 @@ namespace ExtractionShooter.Networking
                 Unsubscribe(character);
                 _raids.Remove(character);
                 _ending.Remove(character);
+                _records.Remove(character);
             }
         }
+
+        /// <summary>A kill by a player in a raid: counted towards their summary (players and bots separately).</summary>
+        private void CountKill(Health victim, DamageInfo cause)
+        {
+            if (cause.InstigatorClientId == DamageInfo.NoInstigator || victim == null) return;
+            foreach (KeyValuePair<PlayerCharacter, RaidRecord> entry in _records)
+            {
+                PlayerCharacter killer = entry.Key;
+                if (killer == null || killer.OwnerId != cause.InstigatorClientId || killer.Health == victim) continue;
+                if (victim.GetComponent<PlayerCharacter>() != null) entry.Value.PlayerKills++;
+                else if (victim.GetComponent<BotBrain>() != null) entry.Value.BotKills++;
+                return;
+            }
+        }
+
+        private RaidSummary BuildSummary(PlayerCharacter character, bool extracted)
+        {
+            _records.TryGetValue(character, out RaidRecord record);
+            record ??= new RaidRecord { StartedAt = Time.timeAsDouble, EndsAt = double.MaxValue };
+
+            RaidResult result = extracted ? RaidResult.Extracted
+                : record.KillerClientId != DamageInfo.NoInstigator && record.KillerClientId != character.OwnerId ? RaidResult.KilledByPlayer
+                : Time.timeAsDouble >= record.EndsAt - 0.5 ? RaidResult.MissingInAction
+                : RaidResult.KilledByBot;
+
+            return new RaidSummary
+            {
+                Result = result,
+                Seconds = Mathf.Max(0, Mathf.RoundToInt((float)(Time.timeAsDouble - record.StartedAt))),
+                PlayerKills = record.PlayerKills,
+                BotKills = record.BotKills,
+                DeployedValue = record.DeployedValue,
+                ExtractedValue = extracted ? CarriedValue(character) : 0,
+                ExitFee = extracted ? character.Raid.ServerExitFee : 0,
+                ExtractedAt = extracted ? character.Raid.ServerExtractedAt : string.Empty,
+                KilledBy = result == RaidResult.KilledByPlayer ? NameOf(record.KillerClientId) : string.Empty,
+            };
+        }
+
+        /// <summary>Listed value of everything the character carries (equipment, rig, backpack, pockets).</summary>
+        private static long CarriedValue(PlayerCharacter character)
+        {
+            PlayerEquipment equipment = character != null ? character.Equipment : null;
+            ItemDatabase database = equipment != null && equipment.Container != null ? equipment.Container.ItemDatabase : null;
+            if (database == null) return 0;
+            return GearValue.Of(equipment.Container, database) + GearValue.Of(equipment.ChestRigStorage, database) +
+                   GearValue.Of(equipment.BackpackStorage, database) + GearValue.Of(equipment.Pockets, database);
+        }
+
+        private string NameOf(int clientId) => _namesByClient.TryGetValue(clientId, out string name) ? name : $"client {clientId}";
+
 
         private void Unsubscribe(PlayerCharacter character)
         {

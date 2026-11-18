@@ -104,9 +104,14 @@ Known limitation: container contents replicate to all clients (a modified client
    first-in first-out without splitting squads and launches after a 15 s countdown, or at once when full.
    Raids run one at a time on this map; a squad may late-join a raid in its first 2 minutes, otherwise it waits for
    the next one. Squadmates spawn together; squads spawn far apart. Bots and loot crates reset for each raid.
-4. **Extract:** hold position in a green extraction zone for 8 s. Everything you carry comes back.
+4. **Extract:** hold position in an open extraction zone for 8 s. Everything you carry comes back. North and South
+   Gate are always open (green), the Helipad costs 2,000 cr charged on completion (amber), and the West Checkpoint
+   opens in the last 8 minutes (blue). The compass and tactical panel show each exit's state.
 5. **Die:** gear stays on your body (except the safe box and knife). If you're broke and have no weapon, you get the
    starter kit. Leaving mid-raid loses the gear too.
+6. **Raid summary:** back in the hideout a panel shows the result (extracted at …, killed by …, KIA, MIA), time in
+   raid, players and bots killed, gear value deployed and brought back, exit fee and profit.
+7. Bodies and drops from the previous raid are removed when the next raid opens.
 
 | Piece | Where | Role |
 |---|---|---|
@@ -114,7 +119,10 @@ Known limitation: container contents replicate to all clients (a modified client
 | `ProfileStore`, `ProfileSnapshot` | Gameplay/Session | JSON files with safe replace; containers ↔ profile (bags get fresh storage on load) |
 | `PlayerSession` | Gameplay/Session | Per-client stash + loadout, sign in, deploy / end raid, hideout moves (server-validated) |
 | `PlayerRaid`, `ExtractionZone` | Gameplay/Raid | Raid clock, MIA, hold-to-extract; zones are boxes without colliders |
-| `RaidDirector` | Networking | Spawns sessions, characters on deploy, ends raids on extract/death |
+| `RaidDirector` | Networking | Spawns sessions, characters on deploy, ends raids on extract/death, kill tracking and the raid summary |
+| `RaidSummary` / `RaidSummaryPanel` | Core/Raid / UI | Summary data (unit-tested) and the hideout panel |
+| `ExtractionRule`, `ExtractionWallet` | Core/Raid / Gameplay/Raid | Free, paid and late-raid exits (unit-tested); paid exits charge the session's credits |
+| `Encumbrance`, `PlayerEncumbrance`, `GearWeight` | Core / Gameplay | Carried weight: light 35, heavy 55, max 70 kg; slower above 35 kg, no sprint above 70 |
 | `LoadoutBuilder` | Gameplay/Inventory | Fills an equipment container and its bags; moves gear slot for slot |
 | `OutOfBoundsKiller` + boundary walls | Networking / scene | Nobody walks off the map; anything below -20 m dies |
 | `StashScreen`, `RaidHudView` | UI | Sign-in + hideout screen; raid timer and extraction progress |

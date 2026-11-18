@@ -65,6 +65,7 @@ namespace ExtractionShooter.UI.Hideout
         private Button _squadTab;
         private VisualElement _squadColumn;
         private SquadPanel _squadPanel;
+        private RaidSummaryPanel _summaryPanel;
         private VisualElement _characterColumn;
         private VisualElement _equipmentColumn;
         private VisualElement _storageColumn;
@@ -82,6 +83,7 @@ namespace ExtractionShooter.UI.Hideout
         private Label _pocketsTitle;
         private Label _safeBoxName;
         private Label _stashTitle;
+        private Label _weight;
         private float _nextTitleRefresh;
 
         private SlotGridView _loadoutView;
@@ -138,6 +140,7 @@ namespace ExtractionShooter.UI.Hideout
 
             _drag = new InventoryDragController(_screen);
             _squadPanel = new SquadPanel(root, () => _drag.Cancel());
+            _summaryPanel = new RaidSummaryPanel(root.Q<VisualElement>("raid-summary"));
             _drag.Dropped += OnDropped;
             _drag.CanFit = (held, under) => _itemDatabase != null && _itemDatabase.Fits(held.ItemId, under.ItemId);
 
@@ -153,6 +156,7 @@ namespace ExtractionShooter.UI.Hideout
             _sortButton = root.Q<Button>("stash-sort-button");
             _stashScroll = root.Q<VisualElement>("stash-scroll");
             _gearValue = root.Q<Label>("hideout-gear-value");
+            _weight = root.Q<Label>("hideout-character-weight");
             _safeBoxTitle = root.Q<Label>("hideout-safebox-title");
             _upgradeButton = root.Q<Button>("safebox-upgrade-button");
             _rigView = CreateView(root, "hideout-rig-grid", "hideout-rig-panel");
@@ -191,6 +195,12 @@ namespace ExtractionShooter.UI.Hideout
             SetText(_pocketsTitle, LoadoutLayout.SectionTitle(_session.LoadoutPockets, "Pockets"));
             SetText(_safeBoxTitle, LoadoutLayout.SectionTitle(_session.SafeBox, "Safe box"));
             SetText(_stashTitle, LoadoutLayout.SectionTitle(_session.Stash, "Stash"));
+
+            // What the loadout will weigh in the raid (same default limits as the player's PlayerEncumbrance).
+            if (_itemDatabase != null)
+                WeightLabel.Show(_weight, GearWeight.Of(_session.Loadout, _itemDatabase) + GearWeight.Of(_session.LoadoutRig, _itemDatabase) +
+                                          GearWeight.Of(_session.LoadoutBackpack, _itemDatabase) +
+                                          GearWeight.Of(_session.LoadoutPockets, _itemDatabase), Encumbrance.Default);
         }
 
         private void SortStash()
@@ -213,6 +223,8 @@ namespace ExtractionShooter.UI.Hideout
             Bind(null);
             _squadPanel?.Dispose();
             _squadPanel = null;
+            _summaryPanel?.Dispose();
+            _summaryPanel = null;
         }
 
         private SlotGridView CreateView(VisualElement root, string gridName, string panelName, System.Func<int, string> caption = null)
@@ -237,6 +249,7 @@ namespace ExtractionShooter.UI.Hideout
             {
                 _session.Changed -= Refresh;
                 _session.SignInFailed -= OnSignInFailed;
+                _session.RaidSummaryReceived -= OnRaidSummary;
                 Unwatch(_session.Loadout);
                 Unwatch(_session.LoadoutPockets);
                 if (_session.Trading != null)
@@ -252,6 +265,7 @@ namespace ExtractionShooter.UI.Hideout
             {
                 _session.Changed += Refresh;
                 _session.SignInFailed += OnSignInFailed;
+                _session.RaidSummaryReceived += OnRaidSummary;
                 Watch(_session.Loadout);
                 Watch(_session.LoadoutPockets);
                 if (_session.Trading != null)
@@ -263,6 +277,12 @@ namespace ExtractionShooter.UI.Hideout
             SetText(_tradeMessage, string.Empty);
             _squadPanel?.Bind(_session != null ? _session.GetComponent<PlayerSquad>() : null);
             Refresh();
+        }
+
+        private void OnRaidSummary(ExtractionShooter.Core.Raid.RaidSummary summary)
+        {
+            _drag.Cancel();
+            _summaryPanel?.Show(summary);
         }
 
         private void Refresh()

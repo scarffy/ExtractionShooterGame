@@ -25,3 +25,4 @@ MonoBehaviour:
   _storagePrefab: {fileID: 89061260635832939, guid: ffa87cea709d4208909e7ac53095888d, type: 3}
   _width: 4
   _height: 4
+  _weight: 2.2

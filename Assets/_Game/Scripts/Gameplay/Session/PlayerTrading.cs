@@ -88,6 +88,25 @@ namespace ExtractionShooter.Gameplay.Session
         /// <summary>Server: set from the profile on sign-in.</summary>
         internal void ServerSetMoney(long money) => _money.Value = Math.Max(0L, money);
 
+        /// <summary>
+        /// Server: takes credits for a service outside the trader (a paid extraction). Returns false, and takes
+        /// nothing, when the player can't afford it. Saved with the profile at the next save (the raid end).
+        /// </summary>
+        internal bool ServerTryCharge(long amount)
+        {
+            if (!IsServerInitialized || amount < 0 || amount > _money.Value) return false;
+            _money.Value -= amount;
+            return true;
+        }
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        /// <summary>Development builds only, on the server (host): adds credits for testing.</summary>
+        public void ServerDevGrant(long amount)
+        {
+            if (IsServerInitialized) ServerSetMoney(Money + amount);
+        }
+#endif
+
         [ServerRpc]
         private void ServerBuy(int offerIndex)
         {

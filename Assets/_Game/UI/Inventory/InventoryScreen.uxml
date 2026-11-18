@@ -16,6 +16,7 @@
                 <engine:VisualElement class="character-footer" picking-mode="Ignore">
                     <engine:Label name="character-name" class="character-name" picking-mode="Ignore" />
                     <engine:Label name="gear-value" class="gear-value" picking-mode="Ignore" />
+                    <engine:Label name="character-weight" class="character-weight" picking-mode="Ignore" />
                 </engine:VisualElement>
             </engine:VisualElement>
             <engine:VisualElement name="equipment-column" class="inventory-column equipment-column">
@@ -113,6 +114,7 @@
                     <engine:VisualElement class="character-footer" picking-mode="Ignore">
                         <engine:Label name="hideout-character-name" class="character-name" picking-mode="Ignore" />
                         <engine:Label name="hideout-gear-value" class="gear-value" picking-mode="Ignore" />
+                        <engine:Label name="hideout-character-weight" class="character-weight" picking-mode="Ignore" />
                     </engine:VisualElement>
                 </engine:VisualElement>
                 <engine:VisualElement name="hideout-equipment-column" class="inventory-column equipment-column">
@@ -231,6 +233,41 @@
             </engine:VisualElement>
             <engine:Label name="hideout-details" class="item-details" picking-mode="Ignore" />
             <engine:Label name="hideout-hint" class="inventory-hint" text="Click: stash / equip   ·   Alt+click: move one   ·   Drag: place in a slot   ·   Right-click: open bag / remove attachment   ·   Safe box and knife are kept on death" picking-mode="Ignore" />
+        </engine:VisualElement>
+        <engine:VisualElement name="raid-summary" class="raid-summary hidden">
+            <engine:VisualElement class="raid-summary__panel">
+                <engine:Label class="raid-summary__caption" text="RAID SUMMARY" />
+                <engine:Label name="raid-summary-result" class="raid-summary__result" />
+                <engine:Label name="raid-summary-time" class="raid-summary__time" />
+                <engine:VisualElement class="raid-summary__rows">
+                    <engine:VisualElement class="raid-summary__row">
+                        <engine:Label class="raid-summary__label" text="Players killed" />
+                        <engine:Label name="raid-summary-player-kills" class="raid-summary__value" />
+                    </engine:VisualElement>
+                    <engine:VisualElement class="raid-summary__row">
+                        <engine:Label class="raid-summary__label" text="Bots killed" />
+                        <engine:Label name="raid-summary-bot-kills" class="raid-summary__value" />
+                    </engine:VisualElement>
+                    <engine:VisualElement class="raid-summary__row">
+                        <engine:Label class="raid-summary__label" text="Deployed with" />
+                        <engine:Label name="raid-summary-deployed" class="raid-summary__value" />
+                    </engine:VisualElement>
+                    <engine:VisualElement class="raid-summary__row">
+                        <engine:Label class="raid-summary__label" text="Brought back" />
+                        <engine:Label name="raid-summary-extracted" class="raid-summary__value" />
+                    </engine:VisualElement>
+                    <engine:VisualElement name="raid-summary-fee-row" class="raid-summary__row">
+                        <engine:Label class="raid-summary__label" text="Exit fee" />
+                        <engine:Label name="raid-summary-fee" class="raid-summary__value raid-summary__value--loss" />
+                    </engine:VisualElement>
+                    <engine:VisualElement class="raid-summary__row raid-summary__row--total">
+                        <engine:Label class="raid-summary__label" text="Profit" />
+                        <engine:Label name="raid-summary-profit" class="raid-summary__value" />
+                    </engine:VisualElement>
+                </engine:VisualElement>
+                <engine:Label class="raid-summary__note" text="Your safe box and knife are always kept." />
+                <engine:Button name="raid-summary-close" class="panel-button deploy-button" text="Continue" />
+            </engine:VisualElement>
         </engine:VisualElement>
     </engine:VisualElement>
 </engine:UXML>

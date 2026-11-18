@@ -26,3 +26,4 @@ MonoBehaviour:
   _wearMultiplier: 1.0
   _width: 3
   _height: 3
+  _weight: 5.0

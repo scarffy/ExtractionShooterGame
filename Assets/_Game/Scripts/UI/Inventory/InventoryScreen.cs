@@ -46,6 +46,7 @@ namespace ExtractionShooter.UI.Inventory
         private Label _pocketsTitle;
         private Label _characterName;
         private Label _gearValue;
+        private Label _weight;
         private VisualElement _previewImage;
         private float _nextTitleRefresh;
 
@@ -96,6 +97,7 @@ namespace ExtractionShooter.UI.Inventory
             _pocketsTitle = root.Q<Label>("pockets-title");
             _characterName = root.Q<Label>("character-name");
             _gearValue = root.Q<Label>("gear-value");
+            _weight = root.Q<Label>("character-weight");
             _previewImage = root.Q<VisualElement>("character-preview");
             _pocketsView = CreateView(root, "pockets-grid", "pockets-panel");
             _safeBoxView = CreateView(root, "safebox-grid", "safebox-panel");
@@ -257,6 +259,9 @@ namespace ExtractionShooter.UI.Inventory
             ItemContainer safeBox = PlayerSession.Local != null ? PlayerSession.Local.SafeBox : null;
             SetText(_safeBoxTitle, LoadoutLayout.SectionTitle(safeBox, "Safe box"));
             SetText(_characterName, PlayerSession.Local != null ? PlayerSession.Local.PlayerName : string.Empty);
+            PlayerEncumbrance encumbrance = _player.GetComponent<PlayerEncumbrance>();
+            if (encumbrance != null)
+                WeightLabel.Show(_weight, encumbrance.CarriedWeight, encumbrance.Rules);
             if (_itemDatabase == null) return;
             long value = GearValue.Of(equipment.Container, _itemDatabase) + GearValue.Of(equipment.ChestRigStorage, _itemDatabase) +
                          GearValue.Of(equipment.BackpackStorage, _itemDatabase) + GearValue.Of(equipment.Pockets, _itemDatabase);

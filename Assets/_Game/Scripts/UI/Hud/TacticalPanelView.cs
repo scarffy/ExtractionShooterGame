@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using ExtractionShooter.Core.Navigation;
+using ExtractionShooter.Core.Raid;
 using ExtractionShooter.Gameplay.Combat;
 using ExtractionShooter.Gameplay.Inventory;
 using ExtractionShooter.Gameplay.Player;
@@ -193,6 +194,7 @@ namespace ExtractionShooter.UI.Hud
 
             Vector3 position = player.transform.position;
             PlayerRaid raid = player.Raid;
+            long credits = LocalCredits();
             for (int i = 0; i < _extractionRows.Count; i++)
             {
                 ExtractionRow row = _extractionRows[i];
@@ -207,9 +209,30 @@ namespace ExtractionShooter.UI.Hud
                 row.Direction.text = $"{NavigationMath.CompassLabel(bearing)} {NavigationMath.FormatBearing(bearing)}  ·  {NavigationMath.FormatDistance(distance)}";
 
                 bool here = raid.IsExtracting && raid.ZoneName == zone.DisplayName;
-                row.Status.text = here ? $"EXTRACTING {Mathf.RoundToInt(raid.ExtractProgress * 100f)}%" : "OPEN";
-                row.Status.style.color = here ? _accentColor : _extractColor;
+                ExtractionStatus status = zone.StatusFor(raid.SecondsLeft, credits);
+                row.Status.text = here ? $"EXTRACTING {Mathf.RoundToInt(raid.ExtractProgress * 100f)}%" : status.Label;
+                row.Status.style.color = here ? _accentColor : StatusColor(status);
+                row.Name.style.color = status.CanExtract ? _extractColor : DimText;
             }
+        }
+
+        /// <summary>Open: green; paid and affordable: accent; can't afford: warning; closed: dim.</summary>
+        private Color StatusColor(in ExtractionStatus status)
+        {
+            switch (status.Availability)
+            {
+                case ExtractionAvailability.PaidAffordable: return _accentColor;
+                case ExtractionAvailability.PaidUnaffordable: return _warningColor;
+                case ExtractionAvailability.Closed: return DimText;
+                default: return _extractColor;
+            }
+        }
+
+        /// <summary>The local player's credits (paid extractions); 0 before the session is known.</summary>
+        private static long LocalCredits()
+        {
+            PlayerSession session = PlayerSession.Local;
+            return session != null && session.Trading != null ? session.Trading.Money : 0L;
         }
 
         private void RefreshStatus(PlayerCharacter player)

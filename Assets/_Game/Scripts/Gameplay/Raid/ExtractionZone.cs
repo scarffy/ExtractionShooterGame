@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ExtractionShooter.Core.Raid;
 using UnityEngine;
 
 namespace ExtractionShooter.Gameplay.Raid
@@ -6,7 +7,8 @@ namespace ExtractionShooter.Gameplay.Raid
     /// <summary>
     /// An area where players extract by staying inside for a few seconds (see <see cref="PlayerRaid"/>).
     /// The area is a box (<see cref="_size"/>) around this transform; it has no collider, so it never
-    /// blocks bullets or interaction rays.
+    /// blocks bullets or interaction rays. Its <see cref="Rule"/> may close it until late in the raid or charge
+    /// a credit fee (Delta Force style); the server enforces it, the HUD shows it through <see cref="StatusFor"/>.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class ExtractionZone : MonoBehaviour
@@ -18,7 +20,22 @@ namespace ExtractionShooter.Gameplay.Raid
         [Tooltip("Box size in local space, centred on this transform.")]
         [SerializeField] private Vector3 _size = new Vector3(6f, 4f, 6f);
 
+        [Tooltip("Always open, paid (credits charged from the profile on extraction) or late-raid (opens near the end).")]
+        [SerializeField] private ExtractionRuleKind _rule = ExtractionRuleKind.AlwaysOpen;
+
+        [Tooltip("Paid: credits charged when the extraction completes.")]
+        [SerializeField, Min(0)] private int _cost = 2000;
+
+        [Tooltip("Late-raid: opens once the raid clock shows this many seconds or fewer.")]
+        [SerializeField, Min(0)] private int _opensWithSecondsLeft = 480;
+
         public string DisplayName => _displayName;
+
+        /// <summary>The condition for extracting here.</summary>
+        public ExtractionRule Rule => new ExtractionRule(_rule, _cost, _opensWithSecondsLeft);
+
+        /// <summary>This point's state for a player with this much raid time left and these credits.</summary>
+        public ExtractionStatus StatusFor(int secondsLeft, long credits) => Rule.Evaluate(secondsLeft, credits);
 
         /// <summary>Box size in local space (the map draws it).</summary>
         public Vector3 Size => _size;

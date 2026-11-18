@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 377236c6d9d54f0880730ed78dbce158, type: 3}
+  m_Name: LootTable_Medical
+  m_EditorClassIdentifier:
+  _minRolls: 2
+  _maxRolls: 4
+  _entries: 
+  - _item: {fileID: 11400000, guid: 7796f65ecf404828b4deac1d657c582e, type: 2}
+    _weight: 30
+    _minQuantity: 1
+    _maxQuantity: 3
+  - _item: {fileID: 11400000, guid: 40696ea490bb4105912779e5e8f6d494, type: 2}
+    _weight: 10
+    _minQuantity: 1
+    _maxQuantity: 1
+  - _item: {fileID: 11400000, guid: 0812ecf9d05b4aa7819160c08a832be2, type: 2}
+    _weight: 12
+    _minQuantity: 1
+    _maxQuantity: 2
+  - _item: {fileID: 11400000, guid: 48093b0006ef4f48ad85ac6ad7608600, type: 2}
+    _weight: 10
+    _minQuantity: 1
+    _maxQuantity: 2

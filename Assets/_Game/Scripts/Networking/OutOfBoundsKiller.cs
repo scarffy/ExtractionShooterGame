@@ -9,8 +9,9 @@ namespace ExtractionShooter.Networking
 {
     /// <summary>
     /// Server safety net: anything with <see cref="Health"/> that falls below <see cref="_killHeight"/>
-    /// (through a gap in the walls or the ground) dies, so it drops its loot and respawns instead of
-    /// falling forever. Boundary walls are the first line; this catches everything else.
+    /// (through a gap in the walls or the ground) or ends up outside the playable square
+    /// (<see cref="_horizontalLimit"/>, through a boundary wall) dies, so it drops its loot and respawns instead of
+    /// falling or wandering forever. Boundary walls are the first line; this catches everything else.
     /// </summary>
     [DisallowMultipleComponent]
     public sealed class OutOfBoundsKiller : MonoBehaviour
@@ -19,6 +20,10 @@ namespace ExtractionShooter.Networking
 
         [Tooltip("World height below which a character is killed.")]
         [SerializeField] private float _killHeight = -20f;
+
+        [Tooltip("Half size of the playable square around the world origin, in metres; anything farther out on X or Z " +
+                 "(past the boundary walls) is killed. 0 disables the check.")]
+        [SerializeField, Min(0f)] private float _horizontalLimit;
 
         [Tooltip("Seconds between checks.")]
         [SerializeField, Min(0.05f)] private float _checkInterval = 0.5f;
@@ -41,7 +46,7 @@ namespace ExtractionShooter.Networking
             _fallen.Clear();
             foreach (NetworkObject networkObject in _networkManager.ServerManager.Objects.Spawned.Values)
             {
-                if (networkObject == null || networkObject.transform.position.y >= _killHeight) continue;
+                if (networkObject == null || IsInBounds(networkObject.transform.position)) continue;
 
                 Health health = networkObject.GetComponent<Health>();
                 if (health != null && health.IsAlive) _fallen.Add(health);
@@ -53,6 +58,13 @@ namespace ExtractionShooter.Networking
                 health.ServerKill(new DamageInfo(health.Max, DamageInfo.NoInstigator, position, Vector3.down));
             }
             _fallen.Clear();
+        }
+
+        private bool IsInBounds(Vector3 position)
+        {
+            if (position.y < _killHeight) return false;
+            return _horizontalLimit <= 0f ||
+                   (Mathf.Abs(position.x) <= _horizontalLimit && Mathf.Abs(position.z) <= _horizontalLimit);
         }
     }
 }

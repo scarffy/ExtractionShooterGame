@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using ExtractionShooter.Core.Inventory;
 using ExtractionShooter.Core.Persistence;
+using ExtractionShooter.Core.Raid;
 using ExtractionShooter.Gameplay.Inventory;
 using ExtractionShooter.Gameplay.Player;
 using ExtractionShooter.Gameplay.Trading;
@@ -98,6 +99,9 @@ namespace ExtractionShooter.Gameplay.Session
 
         /// <summary>Owner side: the server refused the sign-in (reason).</summary>
         public event Action<string> SignInFailed;
+
+        /// <summary>Owner: the end-of-raid report for the raid just finished.</summary>
+        public event Action<RaidSummary> RaidSummaryReceived;
 
         public string PlayerName => _playerName.Value;
         public SessionState State => _state.Value;
@@ -318,6 +322,15 @@ namespace ExtractionShooter.Gameplay.Session
         /// Server, raid director: the raid is over. Extracted gear returns to the loadout; on death it is already
         /// on the corpse, and an empty loadout gets the starter kit. Call before despawning the character.
         /// </summary>
+        /// <summary>Server, raid director: sends the end-of-raid report to this player.</summary>
+        public void ServerSendRaidSummary(RaidSummary summary)
+        {
+            if (IsServerInitialized && Owner != null && Owner.IsValid) TargetRaidSummary(Owner, summary);
+        }
+
+        [TargetRpc]
+        private void TargetRaidSummary(NetworkConnection connection, RaidSummary summary) => RaidSummaryReceived?.Invoke(summary);
+
         public void ServerEndRaid(bool extracted)
         {
             if (!IsServerInitialized || _state.Value != SessionState.InRaid) return;

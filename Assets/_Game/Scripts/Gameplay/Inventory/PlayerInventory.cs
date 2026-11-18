@@ -4,6 +4,7 @@ using ExtractionShooter.Core.Combat;
 using ExtractionShooter.Core.Inventory;
 using ExtractionShooter.Gameplay.Combat;
 using ExtractionShooter.Gameplay.Player;
+using FishNet.Connection;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
@@ -18,6 +19,9 @@ namespace ExtractionShooter.Gameplay.Inventory
     /// within reach, and the storage of a bag lying in that container.
     /// Containers are sent in RPCs as <see cref="ItemContainer"/> references (object + component), so child
     /// containers such as the pockets and the safe box are addressed exactly.
+    /// While a world container (or a bag lying in it) is open, the server grants this player's connection a view of its
+    /// contents (<see cref="ItemContainer.ServerAddViewer"/>); closing it, walking away or dying takes the grant back,
+    /// so the client receives a crate's or corpse's contents only while it is looting it.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(PlayerCharacter), typeof(PlayerEquipment))]
@@ -34,6 +38,10 @@ namespace ExtractionShooter.Gameplay.Inventory
         private PlayerCharacter _character;
         private PlayerEquipment _equipment;
         private ItemContainer _serverSafeBox;
+
+        /// <summary>Server: the containers this player was granted a view of, and the connection they were granted to.</summary>
+        private readonly ViewGrant _worldGrant = new ViewGrant();
+        private readonly ViewGrant _nestedGrant = new ViewGrant();
 
         /// <summary>Owner side. Raised when the looted container or the opened bag changes.</summary>
         public event Action OpenContainersChanged;
@@ -70,6 +78,10 @@ namespace ExtractionShooter.Gameplay.Inventory
             base.OnStopServer();
             if (TimeManager != null) TimeManager.OnTick -= ServerValidateOpenContainers;
             _character.Health.ServerDied -= OnServerDied;
+
+            // Despawned (raid over, disconnect): nothing stays visible to this connection.
+            _worldGrant.MoveTo(null, null);
+            _nestedGrant.MoveTo(null, null);
         }
 
         // ---------------- Owner requests ----------------
@@ -314,11 +326,14 @@ namespace ExtractionShooter.Gameplay.Inventory
             {
                 _openContainer.Value = null;
                 _openNested.Value = null;
-                return;
+            }
+            else if (_openNested.Value != null && !IsNestedStillReachable())
+            {
+                _openNested.Value = null;
             }
 
-            if (_openNested.Value != null && !IsNestedStillReachable())
-                _openNested.Value = null;
+            // Normally done by the open-container callbacks already; this keeps grants and open containers in step regardless.
+            ServerSyncViewGrants();
         }
 
         private void OnServerDied(DamageInfo _)
@@ -332,7 +347,35 @@ namespace ExtractionShooter.Gameplay.Inventory
 
         private void OnOpenChanged(NetworkObject previous, NetworkObject current, bool asServer)
         {
-            if (!asServer) OpenContainersChanged?.Invoke();
+            if (asServer) ServerSyncViewGrants();
+            else OpenContainersChanged?.Invoke();
+        }
+
+        /// <summary>Server: every change of the open containers moves the view grants with them.</summary>
+        private void ServerSyncViewGrants()
+        {
+            if (!IsServerInitialized) return;
+            NetworkConnection viewer = Owner != null && Owner.IsValid ? Owner : null;
+            _worldGrant.MoveTo(viewer != null ? Resolve(_openContainer.Value) : null, viewer);
+            _nestedGrant.MoveTo(viewer != null ? Resolve(_openNested.Value) : null, viewer);
+        }
+
+        /// <summary>One container this player may see because it has it open.</summary>
+        private sealed class ViewGrant
+        {
+            private ItemContainer _container;
+            private NetworkConnection _viewer;
+
+            /// <summary>Revokes the current grant (if any) and grants <paramref name="container"/> instead.</summary>
+            public void MoveTo(ItemContainer container, NetworkConnection viewer)
+            {
+                if (container == _container && ReferenceEquals(viewer, _viewer)) return;
+
+                if (_container != null) _container.ServerRemoveViewer(_viewer);
+                _container = container != null && viewer != null ? container : null;
+                _viewer = _container != null ? viewer : null;
+                if (_container != null) _container.ServerAddViewer(_viewer);
+            }
         }
     }
 }

@@ -32,3 +32,4 @@ MonoBehaviour:
   _recoilMultiplier: 0.95
   _width: 1
   _height: 1
+  _weight: 0.12

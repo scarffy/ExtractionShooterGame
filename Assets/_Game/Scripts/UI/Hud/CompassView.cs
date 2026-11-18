@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using ExtractionShooter.Core.Input;
 using ExtractionShooter.Core.Navigation;
+using ExtractionShooter.Core.Raid;
 using ExtractionShooter.Gameplay.Player;
 using ExtractionShooter.Gameplay.Raid;
+using ExtractionShooter.Gameplay.Session;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -11,8 +13,9 @@ namespace ExtractionShooter.UI.Hud
     /// <summary>
     /// Top-centre compass strip, under the raid timer: a tick every 15 degrees (letters on the eight compass points,
     /// small numbers between), scrolling with the local player's yaw, the bearing being faced as three digits, and a
-    /// marker with the distance for every extraction point (pinned to the strip's edge when it is behind you).
-    /// Shown while the player is alive, in a raid and in control. Built in code.
+    /// marker with the distance for every extraction point (pinned to the strip's edge when it is behind you; faded
+    /// while the point is closed or unaffordable), and a hint under the heading when the point you stand in won't let
+    /// you out yet ("Exit closed: opens in 03:12"). Shown while the player is alive, in a raid and in control. Built in code.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(UIDocument))]
@@ -37,6 +40,10 @@ namespace ExtractionShooter.UI.Hud
         [SerializeField] private Color _dimColor = new Color(0.92f, 0.92f, 0.86f, 0.55f);
         [SerializeField] private Color _northColor = new Color(0.95f, 0.75f, 0.35f, 1f);
         [SerializeField] private Color _extractColor = new Color(0.35f, 0.9f, 0.45f, 1f);
+
+        [Tooltip("Hint text when the extraction point you stand in is closed or unaffordable.")]
+        [SerializeField] private Color _warningColor = new Color(0.95f, 0.35f, 0.3f, 1f);
+
         [SerializeField] private Color _background = new Color(0.04f, 0.05f, 0.06f, 0.45f);
 
         private readonly List<Tick> _ticks = new List<Tick>();
@@ -45,6 +52,7 @@ namespace ExtractionShooter.UI.Hud
         private VisualElement _root;
         private VisualElement _strip;
         private Label _heading;
+        private Label _hint;
 
         private struct Tick
         {
@@ -116,6 +124,12 @@ namespace ExtractionShooter.UI.Hud
             MapUi.Radius(_heading, 3f);
             _root.Add(_heading);
 
+            _hint = MapUi.CenteredText(string.Empty, 14f, _warningColor, _width);
+            _hint.style.position = Position.Relative;
+            _hint.style.marginTop = 4f;
+            _root.Add(_hint);
+            MapUi.Show(_hint, false);
+
             MapUi.Show(_root, false);
         }
 
@@ -169,6 +183,9 @@ namespace ExtractionShooter.UI.Hud
 
             Vector3 position = player.transform.position;
             float edge = half - MarkerSize;
+            int secondsLeft = player.Raid.SecondsLeft;
+            long credits = LocalCredits();
+            string blocked = null;
             for (int i = 0; i < _markers.Count; i++)
             {
                 Marker marker = _markers[i];
@@ -177,6 +194,11 @@ namespace ExtractionShooter.UI.Hud
                 MapUi.Show(marker.Distance, used);
                 if (!used) continue;
 
+                ExtractionStatus status = zones[i].StatusFor(secondsLeft, credits);
+                if (blocked == null && !status.CanExtract && zones[i].Contains(position))
+                    blocked = $"{zones[i].DisplayName}  ·  {status.BlockedReason}";
+                float strength = status.CanExtract ? 1f : 0.35f;
+
                 Vector3 target = zones[i].transform.position;
                 float bearing = NavigationMath.BearingTo(position.x, position.z, target.x, target.z);
                 float offset = NavigationMath.StripOffset(heading, bearing, pixelsPerDegree);
@@ -184,14 +206,24 @@ namespace ExtractionShooter.UI.Hud
                 float x = half + Mathf.Clamp(offset, -edge, edge);
 
                 MapUi.Move(marker.Diamond, x - MarkerSize * 0.5f, MarkerRowTop);
-                marker.Diamond.style.opacity = pinned ? 0.5f : 1f;
+                marker.Diamond.style.opacity = (pinned ? 0.5f : 1f) * strength;
                 marker.Distance.text = NavigationMath.FormatDistance(
                     NavigationMath.GroundDistance(position.x, position.z, target.x, target.z));
                 // Keep the text inside the strip at the edges.
                 float labelLeft = Mathf.Clamp(x - LabelWidth * 0.5f, 0f, _width - LabelWidth);
                 MapUi.Move(marker.Distance, labelLeft, MarkerRowTop + MarkerSize + 1f);
-                marker.Distance.style.opacity = pinned ? 0.5f : 1f;
+                marker.Distance.style.opacity = (pinned ? 0.5f : 1f) * strength;
             }
+
+            MapUi.Show(_hint, blocked != null);
+            if (blocked != null) _hint.text = blocked;
+        }
+
+        /// <summary>The local player's credits (paid extractions); 0 before the session is known.</summary>
+        private static long LocalCredits()
+        {
+            PlayerSession session = PlayerSession.Local;
+            return session != null && session.Trading != null ? session.Trading.Money : 0L;
         }
 
         private Marker CreateMarker()
